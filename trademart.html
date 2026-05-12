@@ -173,6 +173,21 @@ input:checked+.slider:before{transform:translateX(20px)}
 .alert-info{background:#DBEAFE;border:1px solid #BFDBFE;border-radius:8px;padding:10px 14px;font-size:12px;color:#1E40AF;display:flex;align-items:center;gap:8px;margin-bottom:12px}
 .alert-warn{background:#FEF3C7;border:1px solid #FDE68A;border-radius:8px;padding:10px 14px;font-size:12px;color:#92400E;display:flex;align-items:center;gap:8px;margin-bottom:12px}
 @media(max-width:768px){.charts-row,.charts-row2{grid-template-columns:1fr}.login-left{display:none}.login-right{width:100%}}
+/* ── PANEL DE FILTRO — diseño prototipo ── */
+@keyframes fadeDown{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
+.fp-select-wrap{position:relative;background:var(--white);border:1.5px solid var(--border);border-radius:8px;padding:8px 36px 8px 14px;transition:border-color .2s}
+.fp-select-wrap:focus-within{border-color:var(--purple)}
+.fp-label{display:block;font-size:11px;font-weight:600;color:var(--gray);text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px}
+.fp-select{width:100%;border:none;outline:none;font-size:14px;color:var(--navy);background:transparent;appearance:none;-webkit-appearance:none;cursor:pointer;font-weight:500}
+.fp-arrow{position:absolute;right:12px;top:50%;transform:translateY(-50%);color:var(--gray);font-size:11px;pointer-events:none}
+.fp-date-wrap{position:relative;background:var(--white);border:1.5px solid var(--border);border-radius:8px;padding:8px 40px 8px 14px;transition:border-color .2s}
+.fp-date-wrap:focus-within{border-color:var(--purple)}
+.fp-date-label{display:block;font-size:11px;font-weight:600;color:var(--gray);letter-spacing:.4px;margin-bottom:4px}
+.fp-date-input{width:100%;border:none;outline:none;font-size:14px;color:var(--navy);background:transparent;appearance:none;-webkit-appearance:none;font-weight:500;cursor:pointer}
+.fp-date-input::-webkit-calendar-picker-indicator{opacity:0;position:absolute;right:0;top:0;width:100%;height:100%;cursor:pointer}
+.fp-cal-icon{position:absolute;right:12px;top:50%;transform:translateY(-50%);pointer-events:none;display:flex}
+@media(max-width:900px){#filter-panel .fp-grid-3{grid-template-columns:1fr 1fr!important}}
+@media(max-width:600px){#filter-panel .fp-grid-3{grid-template-columns:1fr!important}}
 </style>
 </head>
 <body>
@@ -423,55 +438,415 @@ function renderView(v){
 
 // ═══════════════ DASHBOARD ═══════════════
 function renderDashboard(){
+  const activosSKU=SKU_DATA.filter(s=>s.activo).length;
+  const inactivosSKU=SKU_DATA.filter(s=>!s.activo).length;
+  const compSC=SC_DATA.filter(s=>s.estado==="Completado").length;
+  const pendSC=SC_DATA.filter(s=>s.estado==="Pendiente").length;
   return`
+  <!-- KPIs -->
   <div class="kpi-grid">
-    <div class="kpi-card"><div><div class="kpi-label">PDVs Totales</div><div class="kpi-value">6</div><div class="kpi-sub up">+1 este mes</div></div><div class="kpi-icon" style="background:rgba(14,165,233,.12)"><svg width="20" height="20" fill="none" stroke="var(--primary)" stroke-width="2" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></div></div>
-    <div class="kpi-card"><div><div class="kpi-label">Visitas Hoy</div><div class="kpi-value">3</div><div class="kpi-sub up">60% planificadas</div></div><div class="kpi-icon" style="background:rgba(16,185,129,.12)"><svg width="20" height="20" fill="none" stroke="var(--success)" stroke-width="2" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div></div>
-    <div class="kpi-card"><div><div class="kpi-label">SKUs Activos</div><div class="kpi-value">${SKU_DATA.filter(s=>s.activo).length}</div><div class="kpi-sub">${SKU_DATA.filter(s=>!s.activo).length} inactivo(s)</div></div><div class="kpi-icon" style="background:rgba(139,92,246,.12)"><svg width="20" height="20" fill="none" stroke="var(--purple)" stroke-width="2" viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg></div></div>
-    <div class="kpi-card"><div><div class="kpi-label">Cobertura</div><div class="kpi-value">72%</div><div class="kpi-sub up">+5% vs sem. pasada</div></div><div class="kpi-icon" style="background:rgba(245,158,11,.12)"><svg width="20" height="20" fill="none" stroke="var(--warning)" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></div></div>
-  </div>
-  <div class="charts-row">
-    <div class="card">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px">
-        <div><div class="chart-title">Cobertura Semanal</div><div class="chart-sub">Planificado vs Ejecutado</div></div>
-        ${badge("Esta semana","info")}
-      </div>
-      <canvas id="chart-cobertura" height="180"></canvas>
+    <div class="kpi-card">
+      <div><div class="kpi-label">PDVs Activos</div><div class="kpi-value">5</div><div class="kpi-sub up" style="display:flex;align-items:center;gap:4px"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="18 15 12 9 6 15"/></svg>+1 este mes</div></div>
+      <div class="kpi-icon" style="background:rgba(14,165,233,.1)"><svg width="20" height="20" fill="none" stroke="var(--primary)" stroke-width="2" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></div>
     </div>
-    <div class="card">
-      <div class="chart-title">Estado Storechecks</div><div class="chart-sub">Distribución actual</div>
-      <canvas id="chart-pie" height="160"></canvas>
-      <div class="pie-legend">
-        <div class="pie-legend-row"><div class="pie-dot" style="background:#10B981"></div><span style="flex:1;color:var(--gray)">Completados</span><strong>62%</strong></div>
-        <div class="pie-legend-row"><div class="pie-dot" style="background:#F59E0B"></div><span style="flex:1;color:var(--gray)">En Proceso</span><strong>18%</strong></div>
-        <div class="pie-legend-row"><div class="pie-dot" style="background:#CBD5E1"></div><span style="flex:1;color:var(--gray)">Pendientes</span><strong>20%</strong></div>
-      </div>
+    <div class="kpi-card">
+      <div><div class="kpi-label">Storechecks hoy</div><div class="kpi-value">${compSC}</div><div class="kpi-sub up" style="display:flex;align-items:center;gap:4px"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="18 15 12 9 6 15"/></svg>${compSC} completados · ${pendSC} pendientes</div></div>
+      <div class="kpi-icon" style="background:rgba(16,185,129,.1)"><svg width="20" height="20" fill="none" stroke="var(--success)" stroke-width="2" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div>
+    </div>
+    <div class="kpi-card">
+      <div><div class="kpi-label">SKUs activos</div><div class="kpi-value">${activosSKU}</div><div class="kpi-sub" style="display:flex;align-items:center;gap:4px;color:var(--warning)"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="18 9 12 15 6 9"/></svg>${inactivosSKU} desactivado(s)</div></div>
+      <div class="kpi-icon" style="background:rgba(139,92,246,.1)"><svg width="20" height="20" fill="none" stroke="var(--purple)" stroke-width="2" viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg></div>
+    </div>
+    <div class="kpi-card">
+      <div><div class="kpi-label">Cobertura semanal</div><div class="kpi-value">72%</div><div class="kpi-sub up" style="display:flex;align-items:center;gap:4px"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="18 15 12 9 6 15"/></svg>+5 pp vs semana anterior</div></div>
+      <div class="kpi-icon" style="background:rgba(245,158,11,.1)"><svg width="20" height="20" fill="none" stroke="var(--warning)" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></div>
     </div>
   </div>
+
+  <!-- FILA 1: Combo Bar+Línea + Doughnut -->
+  <div class="charts-row" style="margin-bottom:16px">
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px">
+        <div>
+          <div class="chart-title">Visitas Planificadas vs Ejecutadas — Esta semana</div>
+          <div class="chart-sub">Barras: cantidad de PDVs · Línea morada: % de cobertura diaria</div>
+        </div>
+        <div style="display:flex;gap:6px">
+          ${badge("Lun–Vie","info")}
+        </div>
+      </div>
+      <canvas id="chart-cobertura" height="195"></canvas>
+    </div>
+    <div class="card" style="display:flex;flex-direction:column">
+      <div class="chart-title">Estado de Storechecks</div>
+      <div class="chart-sub">Total registrados este período</div>
+      <!-- Doughnut con número en el centro -->
+      <div style="position:relative;flex:1;display:flex;align-items:center;justify-content:center">
+        <canvas id="chart-pie" style="max-height:190px"></canvas>
+        <div style="position:absolute;text-align:center;pointer-events:none">
+          <div style="font-size:26px;font-weight:700;color:var(--navy)">${SC_DATA.length}</div>
+          <div style="font-size:10px;color:var(--gray);font-weight:600;text-transform:uppercase;letter-spacing:.5px">Total</div>
+        </div>
+      </div>
+      <div class="pie-legend" style="margin-top:12px">
+        <div class="pie-legend-row"><div class="pie-dot" style="background:#10B981;border-radius:4px"></div><span style="flex:1;color:var(--gray);font-size:12px">Completados</span><strong style="font-size:12px">${SC_DATA.filter(s=>s.estado==="Completado").length} (${Math.round(SC_DATA.filter(s=>s.estado==="Completado").length/SC_DATA.length*100)}%)</strong></div>
+        <div class="pie-legend-row"><div class="pie-dot" style="background:#F59E0B;border-radius:4px"></div><span style="flex:1;color:var(--gray);font-size:12px">En Proceso</span><strong style="font-size:12px">${SC_DATA.filter(s=>s.estado==="En Proceso").length} (${Math.round(SC_DATA.filter(s=>s.estado==="En Proceso").length/SC_DATA.length*100)}%)</strong></div>
+        <div class="pie-legend-row"><div class="pie-dot" style="background:#CBD5E1;border-radius:4px"></div><span style="flex:1;color:var(--gray);font-size:12px">Pendientes</span><strong style="font-size:12px">${SC_DATA.filter(s=>s.estado==="Pendiente").length} (${Math.round(SC_DATA.filter(s=>s.estado==="Pendiente").length/SC_DATA.length*100)}%)</strong></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FILA 2: Barras horizontales por mercaderista + Línea tendencia cobertura mensual -->
   <div class="charts-row2">
     <div class="card">
-      <div class="chart-title">Tendencia Stock Promedio</div><div class="chart-sub">Por semana</div>
-      <canvas id="chart-stock" height="160"></canvas>
+      <div class="chart-title">Storechecks por Mercaderista</div>
+      <div class="chart-sub">Completados vs Pendientes — semana actual</div>
+      <canvas id="chart-merc" height="160"></canvas>
     </div>
     <div class="card">
-      <div class="chart-title" style="margin-bottom:12px">Últimos Storechecks</div>
-      ${SC_DATA.slice(0,4).map(sc=>`
-        <div class="recent-row">
-          <div style="width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;background:${sc.estado==='Completado'?'rgba(16,185,129,.15)':sc.estado==='En Proceso'?'rgba(245,158,11,.15)':'rgba(148,163,184,.15)'}">
-            ${sc.estado==='Completado'?`<svg width="14" height="14" fill="none" stroke="#10B981" stroke-width="2.5" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>`:sc.estado==='En Proceso'?`<svg width="14" height="14" fill="none" stroke="#F59E0B" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`:`<svg width="14" height="14" fill="none" stroke="#94A3B8" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/></svg>`}
-          </div>
-          <div style="flex:1"><div style="font-size:12px;font-weight:600;color:var(--navy)">${sc.pdv}</div><div style="font-size:11px;color:var(--gray)">${sc.puesto||""}</div></div>
-          ${badge(sc.estado,sc.estado==="Completado"?"success":sc.estado==="En Proceso"?"warning":"default")}
-        </div>`).join("")}
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:2px">
+        <div>
+          <div class="chart-title">Evolución de Cobertura Mensual</div>
+          <div class="chart-sub">% real alcanzado · Línea roja: meta mínima 80%</div>
+        </div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end">
+          <span style="font-size:11px;font-weight:600;color:var(--success);display:flex;align-items:center;gap:3px"><span style="display:inline-block;width:14px;height:3px;background:var(--primary);border-radius:2px"></span>Cobertura</span>
+          <span style="font-size:11px;font-weight:600;color:var(--danger);display:flex;align-items:center;gap:3px"><span style="display:inline-block;width:14px;height:3px;background:var(--danger);border-radius:2px;border-bottom:2px dashed var(--danger)"></span>Meta 80%</span>
+        </div>
+      </div>
+      <canvas id="chart-trend" height="160"></canvas>
+    </div>
+  </div>
+
+  <!-- FILA 3: Actividad reciente -->
+  <div style="margin-top:16px">
+    <div class="card card-0">
+      <div style="padding:14px 20px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
+        <div style="font-size:14px;font-weight:700;color:var(--navy)">Actividad Reciente</div>
+        <button class="btn btn-ghost btn-sm" onclick="navigate('storecheck')" style="font-size:12px;color:var(--primary)">Ver todos →</button>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:0">
+        ${SC_DATA.slice(0,4).map((sc,i)=>`
+          <div style="display:flex;align-items:center;gap:12px;padding:12px 20px;border-bottom:1px solid var(--border);border-right:${i%2===0?'1px solid var(--border)':'none'}">
+            <div style="width:34px;height:34px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;background:${sc.estado==='Completado'?'rgba(16,185,129,.12)':sc.estado==='En Proceso'?'rgba(245,158,11,.12)':'rgba(148,163,184,.12)'}">
+              ${sc.estado==='Completado'?`<svg width="15" height="15" fill="none" stroke="#10B981" stroke-width="2.5" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>`:sc.estado==='En Proceso'?`<svg width="15" height="15" fill="none" stroke="#F59E0B" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`:`<svg width="15" height="15" fill="none" stroke="#94A3B8" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/></svg>`}
+            </div>
+            <div style="flex:1;min-width:0">
+              <div style="font-size:13px;font-weight:600;color:var(--navy);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${sc.pdv}</div>
+              <div style="font-size:11px;color:var(--gray);margin-top:1px">${sc.mercaderista} · ${sc.fecha}</div>
+            </div>
+            ${badge(sc.estado,sc.estado==="Completado"?"success":sc.estado==="En Proceso"?"warning":"default")}
+          </div>`).join("")}
+      </div>
     </div>
   </div>`;
 }
+
 function initDashboardCharts(){
-  const cob=document.getElementById("chart-cobertura");const pie=document.getElementById("chart-pie");const stk=document.getElementById("chart-stock");
-  if(!cob||!pie||!stk)return;
-  chartInstances.cob=new Chart(cob,{type:"bar",data:{labels:["Lun","Mar","Mié","Jue","Vie"],datasets:[{label:"Planificado",data:[8,10,7,9,6],backgroundColor:"#E2E8F0",borderRadius:4},{label:"Ejecutado",data:[7,9,5,8,3],backgroundColor:"#0EA5E9",borderRadius:4}]},options:{responsive:true,plugins:{legend:{display:true,position:"bottom",labels:{boxWidth:10,font:{size:11}}}},scales:{x:{grid:{display:false},ticks:{font:{size:11}}},y:{grid:{color:"#F1F5F9"},ticks:{font:{size:11}}}}}});
-  chartInstances.pie=new Chart(pie,{type:"doughnut",data:{labels:["Completados","En Proceso","Pendientes"],datasets:[{data:[62,18,20],backgroundColor:["#10B981","#F59E0B","#CBD5E1"],borderWidth:0,hoverOffset:4}]},options:{responsive:true,cutout:"60%",plugins:{legend:{display:false}}}});
-  chartInstances.stk=new Chart(stk,{type:"line",data:{labels:["S1","S2","S3","S4"],datasets:[{label:"Stock %",data:[85,78,92,88],borderColor:"#0EA5E9",backgroundColor:"rgba(14,165,233,.1)",tension:.4,fill:true,pointBackgroundColor:"#0EA5E9",pointRadius:4}]},options:{responsive:true,plugins:{legend:{display:false}},scales:{x:{grid:{display:false},ticks:{font:{size:11}}},y:{min:60,max:100,grid:{color:"#F1F5F9"},ticks:{font:{size:11}}}}}});
+  const cob=document.getElementById("chart-cobertura");
+  const pie=document.getElementById("chart-pie");
+  const merc=document.getElementById("chart-merc");
+  const trend=document.getElementById("chart-trend");
+  if(!cob||!pie||!merc||!trend)return;
+
+  // Datos reales derivados
+  const planDia=[8,10,7,9,6];
+  const execDia=[7,9,5,8,3];
+  const pctDia=planDia.map((p,i)=>Math.round(execDia[i]/p*100));
+
+  // ── GRÁFICO 1: Combo Barras + Línea de cobertura ──
+  chartInstances.cob=new Chart(cob,{
+    type:"bar",
+    data:{
+      labels:["Lunes","Martes","Miércoles","Jueves","Viernes"],
+      datasets:[
+        {
+          label:"PDVs Planificados",
+          data:planDia,
+          backgroundColor:"rgba(226,232,240,0.8)",
+          borderColor:"#CBD5E1",
+          borderWidth:1,
+          borderRadius:{topLeft:5,topRight:5},
+          borderSkipped:false,
+          order:2,
+          yAxisID:"y"
+        },
+        {
+          label:"PDVs Ejecutados",
+          data:execDia,
+          backgroundColor:"rgba(14,165,233,0.85)",
+          borderColor:"#0284C7",
+          borderWidth:1,
+          borderRadius:{topLeft:5,topRight:5},
+          borderSkipped:false,
+          order:2,
+          yAxisID:"y"
+        },
+        {
+          label:"% Cobertura",
+          data:pctDia,
+          type:"line",
+          borderColor:"#8B5CF6",
+          backgroundColor:"rgba(139,92,246,0.08)",
+          borderWidth:2.5,
+          pointBackgroundColor:"#8B5CF6",
+          pointBorderColor:"#fff",
+          pointBorderWidth:2,
+          pointRadius:6,
+          pointHoverRadius:8,
+          tension:0.35,
+          fill:false,
+          order:1,
+          yAxisID:"y2"
+        }
+      ]
+    },
+    options:{
+      responsive:true,
+      interaction:{mode:"index",intersect:false},
+      plugins:{
+        legend:{
+          display:true,
+          position:"bottom",
+          labels:{boxWidth:12,font:{size:11},padding:16,usePointStyle:false}
+        },
+        tooltip:{
+          backgroundColor:"#fff",
+          borderColor:"#E2E8F0",
+          borderWidth:1,
+          titleColor:"#0F172A",
+          bodyColor:"#64748B",
+          padding:10,
+          callbacks:{
+            label:(ctx)=>{
+              if(ctx.dataset.label==="% Cobertura") return ` Cobertura: ${ctx.parsed.y}%`;
+              return ` ${ctx.dataset.label}: ${ctx.parsed.y} PDVs`;
+            }
+          }
+        }
+      },
+      scales:{
+        x:{
+          grid:{display:false},
+          border:{display:false},
+          ticks:{font:{size:11},color:"#94A3B8"}
+        },
+        y:{
+          min:0,
+          max:12,
+          position:"left",
+          grid:{
+            color:"#E2E8F0",
+            drawBorder:false,
+            lineWidth:1
+          },
+          border:{display:false,dash:[3,3]},
+          ticks:{
+            font:{size:11},
+            color:"#94A3B8",
+            stepSize:2,
+            callback:v=>v+" PDVs"
+          }
+        },
+        y2:{
+          min:0,
+          max:100,
+          position:"right",
+          grid:{display:false},
+          border:{display:false},
+          ticks:{
+            font:{size:11},
+            color:"#8B5CF6",
+            stepSize:20,
+            callback:v=>v+"%"
+          }
+        }
+      }
+    }
+  });
+
+  // ── GRÁFICO 2: Doughnut estado storechecks ──
+  const nComp=SC_DATA.filter(s=>s.estado==="Completado").length;
+  const nProc=SC_DATA.filter(s=>s.estado==="En Proceso").length;
+  const nPend=SC_DATA.filter(s=>s.estado==="Pendiente").length;
+  chartInstances.pie=new Chart(pie,{
+    type:"doughnut",
+    data:{
+      labels:["Completados","En Proceso","Pendientes"],
+      datasets:[{
+        data:[nComp,nProc,nPend],
+        backgroundColor:["#10B981","#F59E0B","#CBD5E1"],
+        hoverBackgroundColor:["#059669","#D97706","#94A3B8"],
+        borderWidth:3,
+        borderColor:"#fff",
+        hoverOffset:6
+      }]
+    },
+    options:{
+      responsive:true,
+      cutout:"68%",
+      plugins:{
+        legend:{display:false},
+        tooltip:{
+          backgroundColor:"#fff",
+          borderColor:"#E2E8F0",
+          borderWidth:1,
+          titleColor:"#0F172A",
+          bodyColor:"#64748B",
+          callbacks:{
+            label:(ctx)=>{
+              const total=ctx.dataset.data.reduce((a,b)=>a+b,0);
+              return ` ${ctx.label}: ${ctx.parsed} (${Math.round(ctx.parsed/total*100)}%)`;
+            }
+          }
+        }
+      }
+    }
+  });
+
+  // ── GRÁFICO 3: Barras horizontales por mercaderista ──
+  const mercaderistas=[...new Set(SC_DATA.map(s=>s.mercaderista))];
+  const dataComp=mercaderistas.map(m=>SC_DATA.filter(s=>s.mercaderista===m&&s.estado==="Completado").length);
+  const dataProc=mercaderistas.map(m=>SC_DATA.filter(s=>s.mercaderista===m&&s.estado==="En Proceso").length);
+  const dataPend=mercaderistas.map(m=>SC_DATA.filter(s=>s.mercaderista===m&&s.estado==="Pendiente").length);
+  chartInstances.merc=new Chart(merc,{
+    type:"bar",
+    data:{
+      labels:mercaderistas,
+      datasets:[
+        {label:"Completados",data:dataComp,backgroundColor:"#10B981",borderRadius:4,borderSkipped:false},
+        {label:"En Proceso",data:dataProc,backgroundColor:"#F59E0B",borderRadius:4,borderSkipped:false},
+        {label:"Pendientes",data:dataPend,backgroundColor:"#E2E8F0",borderRadius:4,borderSkipped:false}
+      ]
+    },
+    options:{
+      indexAxis:"y",
+      responsive:true,
+      interaction:{mode:"index",intersect:false},
+      plugins:{
+        legend:{
+          display:true,
+          position:"bottom",
+          labels:{boxWidth:11,font:{size:11},padding:14}
+        },
+        tooltip:{
+          backgroundColor:"#fff",
+          borderColor:"#E2E8F0",
+          borderWidth:1,
+          titleColor:"#0F172A",
+          bodyColor:"#64748B"
+        }
+      },
+      scales:{
+        x:{
+          stacked:true,
+          grid:{color:"#E2E8F0",drawBorder:false,lineWidth:1},
+          border:{display:false,dash:[3,3]},
+          ticks:{font:{size:11},color:"#94A3B8",stepSize:1,callback:v=>v+" SC"}
+        },
+        y:{
+          stacked:true,
+          grid:{display:false},
+          border:{display:false},
+          ticks:{font:{size:11},color:"#0F172A",font:{size:12,weight:"600"}}
+        }
+      }
+    }
+  });
+
+  // ── GRÁFICO 4: Línea evolución cobertura + meta ──
+  const meses=["Ene","Feb","Mar","Abr","May","Jun"];
+  const cobReal=[58,63,67,72,72,null];
+  const metaLinea=[80,80,80,80,80,80];
+  chartInstances.trend=new Chart(trend,{
+    type:"line",
+    data:{
+      labels:meses,
+      datasets:[
+        {
+          label:"Cobertura real (%)",
+          data:cobReal,
+          borderColor:"#0EA5E9",
+          backgroundColor:"rgba(14,165,233,0.1)",
+          borderWidth:2.5,
+          pointBackgroundColor:"#0EA5E9",
+          pointBorderColor:"#fff",
+          pointBorderWidth:2,
+          pointRadius:5,
+          pointHoverRadius:7,
+          tension:0.35,
+          fill:true,
+          spanGaps:false
+        },
+        {
+          label:"Meta mínima (80%)",
+          data:metaLinea,
+          borderColor:"#EF4444",
+          backgroundColor:"transparent",
+          borderWidth:2,
+          borderDash:[6,4],
+          pointRadius:0,
+          pointHoverRadius:0,
+          tension:0,
+          fill:false
+        }
+      ]
+    },
+    options:{
+      responsive:true,
+      interaction:{mode:"index",intersect:false},
+      plugins:{
+        legend:{
+          display:true,
+          position:"bottom",
+          labels:{
+            boxWidth:20,
+            font:{size:11},
+            padding:14,
+            generateLabels:(chart)=>{
+              const ds=chart.data.datasets;
+              return ds.map((d,i)=>({
+                text:d.label,
+                fillStyle:d.borderColor,
+                strokeStyle:d.borderColor,
+                lineWidth:2,
+                hidden:false,
+                datasetIndex:i,
+                lineDash:d.borderDash||[]
+              }));
+            }
+          }
+        },
+        tooltip:{
+          backgroundColor:"#fff",
+          borderColor:"#E2E8F0",
+          borderWidth:1,
+          titleColor:"#0F172A",
+          bodyColor:"#64748B",
+          callbacks:{label:(ctx)=>` ${ctx.dataset.label}: ${ctx.parsed.y!==null?ctx.parsed.y+"%":"sin dato"}`}
+        }
+      },
+      scales:{
+        x:{
+          grid:{display:false},
+          border:{display:false},
+          ticks:{font:{size:11},color:"#94A3B8"}
+        },
+        y:{
+          min:40,
+          max:100,
+          grid:{color:"#E2E8F0",drawBorder:false,lineWidth:1},
+          border:{display:false,dash:[3,3]},
+          ticks:{
+            font:{size:11},
+            color:"#94A3B8",
+            stepSize:10,
+            callback:v=>v+"%"
+          }
+        }
+      }
+    }
+  });
 }
 
 // ═══════════════ PDV ═══════════════
@@ -1104,30 +1479,128 @@ function deleteActividad(id){
 }
 
 // ═══════════════ REPORTES ═══════════════
+// ── Estado de filtros de reporte
+let repFiltros={storecheck:"",controller:"",supervisor:"",gestor:"",fechaIni:"",fechaFin:""};
+let repFiltrosAplicados={storecheck:"",controller:"",supervisor:"",gestor:"",fechaIni:"",fechaFin:""};
+
 function renderReportes(){
   const scC={Completado:"success","En Proceso":"warning",Pendiente:"default"};
+  // Aplicar filtros activos a los datos de la tabla
+  let dataFiltrada=SC_DATA.filter(sc=>{
+    const f=repFiltrosAplicados;
+    if(f.storecheck && sc.actividad!==f.storecheck) return false;
+    if(f.controller && sc.mercaderista!==f.controller) return false;
+    if(f.supervisor && sc.mercaderista!==f.supervisor) return false;
+    if(f.gestor && sc.mercaderista!==f.gestor) return false;
+    if(f.fechaIni && sc.fecha < f.fechaIni) return false;
+    if(f.fechaFin && sc.fecha > f.fechaFin) return false;
+    return true;
+  });
+  const hayFiltros=Object.values(repFiltrosAplicados).some(v=>v!=="");
+  const hoy=new Date().toISOString().split("T")[0];
   return`
+  <!-- TOOLBAR -->
   <div class="toolbar">
-    <div class="searchbar">${IC.search}<input placeholder="Buscar reporte..."></div>
-    <button class="btn btn-secondary btn-sm" onclick="toggleFilterPanel()">${IC.filter} Filtros Avanzados</button>
+    <div class="searchbar">${IC.search}<input id="rep-search" placeholder="Buscar reporte..." oninput="filterRepTable(this.value)"></div>
+    <button class="btn ${filterPanelOpen?'btn-primary':'btn-secondary'} btn-sm" onclick="toggleFilterPanel()" id="btn-filtro">
+      <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="11" y1="18" x2="13" y2="18"/></svg>
+      Filtro${hayFiltros?" <span style='background:#fff;color:var(--purple);border-radius:99px;padding:0 5px;font-size:10px;font-weight:700;margin-left:2px'>●</span>":""}
+    </button>
     <button class="btn btn-secondary btn-sm" onclick="showExportModal()">${IC.download} Generar Excel</button>
     <button class="btn btn-secondary btn-sm" onclick="showNotif('Importando desde Excel...')">${IC.upload} Importar Excel</button>
   </div>
-  <div id="filter-panel" style="display:${filterPanelOpen?'block':'none'};margin-bottom:20px">
-    <div class="card">
-      <div style="font-size:13px;font-weight:700;color:var(--navy);margin-bottom:16px">Filtros Avanzados</div>
-      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:0 16px">
-        <div class="field"><label>Punto de Venta</label><select><option value="">Todos</option>${PDV_DATA.map(p=>`<option>${p.nombre}</option>`).join("")}</select></div>
-        <div class="field"><label>Mercaderista</label><select><option value="">Todos</option>${USERS.filter(u=>u.role==="mercaderista").map(u=>`<option>${u.name}</option>`).join("")}</select></div>
-        <div class="field"><label>Fecha desde</label><input type="date"></div>
-        <div class="field"><label>Estado</label><select><option>Todos</option><option>Completado</option><option>En Proceso</option><option>Pendiente</option></select></div>
+
+  <!-- PANEL DE FILTRO DESPLEGABLE — diseño del prototipo -->
+  <div id="filter-panel" style="display:${filterPanelOpen?'block':'none'};margin-bottom:20px;animation:fadeDown .2s ease">
+    <div style="background:var(--white);border:1px solid var(--border);border-radius:12px;box-shadow:0 4px 20px rgba(0,0,0,.08);overflow:hidden">
+      <!-- Cabecera del panel -->
+      <div style="display:flex;align-items:center;gap:10px;padding:16px 24px;border-bottom:1px solid var(--border)">
+        <svg width="18" height="18" fill="none" stroke="var(--gray)" stroke-width="2" viewBox="0 0 24 24"><line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="11" y1="18" x2="13" y2="18"/></svg>
+        <span style="font-size:14px;font-weight:600;color:var(--navy)">Filtro</span>
       </div>
-      <div style="display:flex;gap:10px;margin-top:4px">
-        <button class="btn btn-primary btn-sm" onclick="showNotif('Filtros aplicados')">${IC.check} Aplicar</button>
-        <button class="btn btn-secondary btn-sm">Limpiar</button>
+      <!-- Cuerpo del panel -->
+      <div style="padding:20px 24px">
+        <!-- Fila 1: STORECHECK · Controller · Supervisor -->
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:12px">
+          <!-- STORECHECK -->
+          <div class="fp-select-wrap">
+            <label class="fp-label">STORECHECK</label>
+            <select id="fp-sc" class="fp-select" onchange="repFiltros.storecheck=this.value">
+              <option value="">Todos</option>
+              ${[...new Set(SC_DATA.map(s=>s.actividad))].map(a=>`<option value="${a}" ${repFiltros.storecheck===a?"selected":""}>${a}</option>`).join("")}
+            </select>
+            <span class="fp-arrow">▾</span>
+          </div>
+          <!-- Controller = Analista/Validador -->
+          <div class="fp-select-wrap">
+            <label class="fp-label">Controller</label>
+            <select id="fp-ctrl" class="fp-select" onchange="repFiltros.controller=this.value">
+              <option value="">Todos</option>
+              ${USERS.filter(u=>u.role==="analista"||u.role==="admin").map(u=>`<option value="${u.name}" ${repFiltros.controller===u.name?"selected":""}>${u.name}</option>`).join("")}
+            </select>
+            <span class="fp-arrow">▾</span>
+          </div>
+          <!-- Supervisor -->
+          <div class="fp-select-wrap">
+            <label class="fp-label">Supervisor</label>
+            <select id="fp-sup" class="fp-select" onchange="repFiltros.supervisor=this.value">
+              <option value="">Todos</option>
+              ${USERS.filter(u=>u.role==="admin").map(u=>`<option value="${u.name}" ${repFiltros.supervisor===u.name?"selected":""}>${u.name}</option>`).join("")}
+            </select>
+            <span class="fp-arrow">▾</span>
+          </div>
+        </div>
+        <!-- Fila 2: Gestor · Fecha de Inicio · Fecha de Fin -->
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:20px">
+          <!-- Gestor = Mercaderista -->
+          <div class="fp-select-wrap">
+            <label class="fp-label">Gestor</label>
+            <select id="fp-gest" class="fp-select" onchange="repFiltros.gestor=this.value">
+              <option value="">Todos</option>
+              ${USERS.filter(u=>u.role==="mercaderista").map(u=>`<option value="${u.name}" ${repFiltros.gestor===u.name?"selected":""}>${u.name}</option>`).join("")}
+            </select>
+            <span class="fp-arrow">▾</span>
+          </div>
+          <!-- Fecha de Inicio -->
+          <div class="fp-date-wrap">
+            <label class="fp-date-label">Fecha de Inicio *</label>
+            <input id="fp-fi" type="date" class="fp-date-input" value="${repFiltros.fechaIni||hoy}" onchange="repFiltros.fechaIni=this.value">
+            <span class="fp-cal-icon">
+              <svg width="16" height="16" fill="none" stroke="var(--gray)" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            </span>
+          </div>
+          <!-- Fecha de Fin -->
+          <div class="fp-date-wrap">
+            <label class="fp-date-label">Fecha de Fin *</label>
+            <input id="fp-ff" type="date" class="fp-date-input" value="${repFiltros.fechaFin||hoy}" onchange="repFiltros.fechaFin=this.value">
+            <span class="fp-cal-icon">
+              <svg width="16" height="16" fill="none" stroke="var(--gray)" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            </span>
+          </div>
+        </div>
+        <!-- Botones -->
+        <div style="display:flex;justify-content:flex-end;gap:12px;padding-top:16px;border-top:1px solid var(--border)">
+          <button class="btn btn-secondary" style="min-width:100px;justify-content:center" onclick="cerrarFiltro()">Cerrar</button>
+          <button class="btn" style="min-width:100px;justify-content:center;background:var(--purple);color:#fff" onclick="aplicarFiltro()">Filtrar</button>
+        </div>
       </div>
     </div>
   </div>
+
+  <!-- BADGE de filtros activos -->
+  ${hayFiltros?`
+  <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;flex-wrap:wrap">
+    <span style="font-size:12px;color:var(--gray);font-weight:600">Filtros activos:</span>
+    ${repFiltrosAplicados.storecheck?`<span class="badge badge-purple">SC: ${repFiltrosAplicados.storecheck}</span>`:""}
+    ${repFiltrosAplicados.controller?`<span class="badge badge-info">Controller: ${repFiltrosAplicados.controller}</span>`:""}
+    ${repFiltrosAplicados.supervisor?`<span class="badge badge-purple">Supervisor: ${repFiltrosAplicados.supervisor}</span>`:""}
+    ${repFiltrosAplicados.gestor?`<span class="badge badge-success">Gestor: ${repFiltrosAplicados.gestor}</span>`:""}
+    ${repFiltrosAplicados.fechaIni?`<span class="badge badge-default">Desde: ${repFiltrosAplicados.fechaIni}</span>`:""}
+    ${repFiltrosAplicados.fechaFin?`<span class="badge badge-default">Hasta: ${repFiltrosAplicados.fechaFin}</span>`:""}
+    <button onclick="limpiarFiltros()" style="font-size:11px;color:var(--danger);background:none;border:none;cursor:pointer;font-weight:600;text-decoration:underline">✕ Limpiar todo</button>
+  </div>`:""}
+
+  <!-- TIPOS DE REPORTE -->
   <div class="rep-types">
     ${[["Storecheck General","Reporte completo de visitas y stock","var(--primary)"],
        ["Nuevos Puestos","PDVs registrados en el período","var(--success)"],
@@ -1138,16 +1611,24 @@ function renderReportes(){
         <div><div style="font-size:13px;font-weight:700;color:var(--navy)">${t}</div><div style="font-size:11px;color:var(--gray);margin-top:2px">${d}</div></div>
       </div>`).join("")}
   </div>
+
+  <!-- TABLA DE RESULTADOS -->
   <div class="card card-0">
-    <div style="padding:16px 20px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
-      <div style="font-size:14px;font-weight:700;color:var(--navy)">Storechecks Registrados</div>
-      <button class="btn btn-primary btn-sm" onclick="showExportModal()">${IC.download} Exportar .xlsx</button>
+    <div style="padding:16px 20px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+      <div>
+        <div style="font-size:14px;font-weight:700;color:var(--navy)">Storechecks Registrados</div>
+        <div style="font-size:12px;color:var(--gray);margin-top:2px">${dataFiltrada.length} resultado(s)${hayFiltros?" con filtros aplicados":""}</div>
+      </div>
+      <div style="display:flex;gap:8px">
+        ${hayFiltros?`<button class="btn btn-secondary btn-sm" onclick="limpiarFiltros()">✕ Limpiar filtros</button>`:""}
+        <button class="btn btn-primary btn-sm" style="background:var(--purple)" onclick="showExportModal()">${IC.download} Exportar .xlsx</button>
+      </div>
     </div>
     <div class="tbl-wrap">
-      <table>
+      <table id="rep-table">
         <thead><tr><th>PDV</th><th>Puesto</th><th>Fecha</th><th>Mercaderista</th><th>Actividad</th><th>SKUs</th><th>Estado</th><th class="td-actions">Acc.</th></tr></thead>
         <tbody>
-          ${SC_DATA.map(sc=>`<tr>
+          ${dataFiltrada.length>0?dataFiltrada.map(sc=>`<tr>
             <td class="td-bold">${sc.pdv}</td>
             <td class="td-muted" style="font-size:11px">${sc.puesto||"—"}</td>
             <td class="td-muted">${sc.fecha}</td>
@@ -1156,13 +1637,62 @@ function renderReportes(){
             <td>${badge(sc.skus+" SKUs","info")}</td>
             <td>${badge(sc.estado,scC[sc.estado])}</td>
             <td class="td-actions"><div class="td-actions-inner"><button class="btn btn-ghost btn-sm" onclick="showNotif('Exportando: ${sc.pdv}')">${IC.download}</button></div></td>
-          </tr>`).join("")}
+          </tr>`).join(""):`<tr><td colspan="8" class="tbl-empty" style="padding:40px">
+            <svg width="32" height="32" fill="none" stroke="var(--gray)" stroke-width="1.5" viewBox="0 0 24 24" style="margin-bottom:10px;opacity:.4"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <div>No se encontraron registros con los filtros seleccionados</div>
+            <button onclick="limpiarFiltros()" style="margin-top:10px;font-size:12px;color:var(--primary);background:none;border:none;cursor:pointer;font-weight:600">Limpiar filtros</button>
+          </td></tr>`}
         </tbody>
       </table>
     </div>
   </div>`;
 }
-function toggleFilterPanel(){filterPanelOpen=!filterPanelOpen;const fp=document.getElementById("filter-panel");if(fp)fp.style.display=filterPanelOpen?"block":"none"}
+
+// Abrir/cerrar panel de filtro
+function toggleFilterPanel(){
+  filterPanelOpen=!filterPanelOpen;
+  const fp=document.getElementById("filter-panel");
+  const btn=document.getElementById("btn-filtro");
+  if(fp){fp.style.display=filterPanelOpen?"block":"none"}
+  if(btn){btn.className="btn btn-sm "+(filterPanelOpen?"btn-primary":"btn-secondary")}
+}
+function cerrarFiltro(){filterPanelOpen=false;renderView("reportes")}
+
+// Aplicar filtros y re-renderizar tabla
+function aplicarFiltro(){
+  // Leer valores actuales del DOM
+  const sc=document.getElementById("fp-sc");
+  const ctrl=document.getElementById("fp-ctrl");
+  const sup=document.getElementById("fp-sup");
+  const gest=document.getElementById("fp-gest");
+  const fi=document.getElementById("fp-fi");
+  const ff=document.getElementById("fp-ff");
+  repFiltros.storecheck=sc?sc.value:"";
+  repFiltros.controller=ctrl?ctrl.value:"";
+  repFiltros.supervisor=sup?sup.value:"";
+  repFiltros.gestor=gest?gest.value:"";
+  repFiltros.fechaIni=fi?fi.value:"";
+  repFiltros.fechaFin=ff?ff.value:"";
+  // Copiar a aplicados
+  repFiltrosAplicados={...repFiltros};
+  filterPanelOpen=false;
+  showNotif("Filtros aplicados correctamente");
+  renderView("reportes");
+}
+
+function limpiarFiltros(){
+  repFiltros={storecheck:"",controller:"",supervisor:"",gestor:"",fechaIni:"",fechaFin:""};
+  repFiltrosAplicados={storecheck:"",controller:"",supervisor:"",gestor:"",fechaIni:"",fechaFin:""};
+  filterPanelOpen=false;
+  showNotif("Filtros eliminados");
+  renderView("reportes");
+}
+
+function filterRepTable(q){
+  const rows=document.querySelectorAll("#rep-table tbody tr");
+  rows.forEach(r=>{r.style.display=r.textContent.toLowerCase().includes(q.toLowerCase())?"":"none"});
+}
+
 function showExportModal(){
   const num=SC_DATA.length+1;
   openModal("Generar Reporte Storecheck (.xlsx)",`
@@ -1182,7 +1712,7 @@ function showExportModal(){
     </div>
     <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:8px">
       <button class="btn btn-secondary" onclick="closeModalDirect()">Cancelar</button>
-      <button class="btn btn-primary" onclick="exportar()">${IC.download} Generar y Descargar</button>
+      <button class="btn" style="background:var(--purple);color:#fff" onclick="exportar()">${IC.download} Generar y Descargar</button>
     </div>`,"wide");
 }
 function filterRepSKUs(cat){
