@@ -1,0 +1,1816 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>TradeMart — Plataforma de Trade Marketing v3</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap');
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --primary:#0EA5E9;--primary-dark:#0284C7;--navy:#0F172A;
+  --success:#10B981;--warning:#F59E0B;--danger:#EF4444;
+  --purple:#8B5CF6;--gray:#94A3B8;--bg:#F8FAFC;--border:#E2E8F0;--white:#fff;
+}
+body{font-family:'DM Sans','Segoe UI',sans-serif;background:var(--bg);color:var(--navy)}
+button{cursor:pointer;font-family:inherit}
+input,select,textarea{font-family:inherit}
+#app{display:flex;min-height:100vh}
+#sidebar{width:240px;min-height:100vh;background:var(--navy);display:flex;flex-direction:column;transition:width .25s ease;flex-shrink:0;z-index:100}
+#sidebar.collapsed{width:64px}
+#main{flex:1;display:flex;flex-direction:column;min-height:100vh;overflow:hidden}
+#topbar{background:var(--white);border-bottom:1px solid var(--border);padding:0 24px;height:60px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+#content{flex:1;overflow-y:auto;padding:24px}
+.sb-header{padding:20px 16px;border-bottom:1px solid rgba(255,255,255,.08);display:flex;align-items:center;gap:10px}
+.sb-logo{width:32px;height:32px;border-radius:8px;background:var(--primary);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.sb-toggle{margin-left:auto;background:none;border:none;color:rgba(255,255,255,.4);padding:4px;display:flex}
+.sb-nav{flex:1;padding:12px 8px;overflow-y:auto}
+.nav-btn{display:flex;align-items:center;gap:10px;width:100%;padding:10px 12px;border-radius:8px;border:none;cursor:pointer;margin-bottom:2px;background:transparent;color:rgba(255,255,255,.55);transition:all .15s;text-align:left;border-left:3px solid transparent;font-size:13px;font-weight:400}
+.nav-btn.active{background:rgba(14,165,233,.13);color:var(--primary);border-left-color:var(--primary);font-weight:600}
+.nav-btn:hover:not(.active){background:rgba(255,255,255,.05);color:rgba(255,255,255,.8)}
+.nav-label{white-space:nowrap}
+.sb-footer{padding:12px 8px;border-top:1px solid rgba(255,255,255,.08)}
+.sb-user{padding:10px 12px;border-radius:8px;background:rgba(255,255,255,.05);margin-bottom:8px}
+.sb-user-name{font-size:12px;font-weight:600;color:#fff}
+.sb-user-role{font-size:10px;color:var(--primary);font-weight:600;text-transform:uppercase;letter-spacing:.5px}
+.sb-logout{display:flex;align-items:center;gap:10px;width:100%;padding:10px 12px;border-radius:8px;border:none;background:transparent;color:rgba(255,255,255,.4);font-size:13px;transition:all .15s}
+.sb-logout:hover{color:rgba(255,255,255,.7);background:rgba(255,255,255,.05)}
+.card{background:var(--white);border-radius:12px;border:1px solid var(--border);padding:20px 24px;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+.card-0{padding:0}
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-bottom:24px}
+.kpi-card{background:var(--white);border-radius:12px;border:1px solid var(--border);padding:20px 24px;box-shadow:0 1px 3px rgba(0,0,0,.05);display:flex;justify-content:space-between;align-items:flex-start}
+.kpi-label{font-size:11px;color:var(--gray);text-transform:uppercase;letter-spacing:1px;font-weight:600;margin-bottom:4px}
+.kpi-value{font-size:28px;font-weight:700;color:var(--navy);margin-bottom:4px}
+.kpi-sub{font-size:12px;color:var(--gray)}
+.kpi-sub.up{color:var(--success)}
+.kpi-icon{width:44px;height:44px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:99px;font-size:11px;font-weight:600;white-space:nowrap}
+.badge-success{background:#D1FAE5;color:#065F46}
+.badge-warning{background:#FEF3C7;color:#92400E}
+.badge-danger{background:#FEE2E2;color:#991B1B}
+.badge-info{background:#DBEAFE;color:#1E40AF}
+.badge-purple{background:#EDE9FE;color:#5B21B6}
+.badge-default{background:#F1F5F9;color:#475569}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border-radius:8px;font-size:14px;font-weight:600;border:none;transition:opacity .15s;cursor:pointer}
+.btn-sm{padding:6px 14px;font-size:12px}
+.btn-lg{padding:12px 24px;font-size:15px}
+.btn-primary{background:var(--primary);color:#fff}
+.btn-primary:hover{background:var(--primary-dark)}
+.btn-secondary{background:var(--white);color:var(--navy);border:1.5px solid var(--border)}
+.btn-secondary:hover{background:var(--bg)}
+.btn-success{background:var(--success);color:#fff}
+.btn-danger{background:var(--danger);color:#fff}
+.btn-warning{background:var(--warning);color:#fff}
+.btn-ghost{background:transparent;color:var(--gray);border:none;padding:6px 8px}
+.btn-ghost:hover{color:var(--navy);background:var(--bg)}
+.btn-full{width:100%;justify-content:center}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.field{margin-bottom:16px}
+.field label{display:block;font-size:13px;font-weight:600;color:#374151;margin-bottom:6px}
+.field input,.field select,.field textarea{width:100%;padding:9px 12px;border-radius:8px;border:1.5px solid var(--border);font-size:14px;color:var(--navy);background:var(--white);outline:none;transition:border-color .2s}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--primary)}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:0 16px}
+.field-row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:0 16px}
+.field-hint{font-size:11px;color:var(--gray);margin-top:4px}
+.tbl-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px}
+thead tr{background:var(--bg)}
+th{padding:10px 16px;text-align:left;font-weight:600;font-size:11px;color:var(--gray);text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--border);white-space:nowrap}
+td{padding:12px 16px;border-bottom:1px solid var(--border);color:var(--navy)}
+tr:hover td{background:var(--bg)}
+.td-muted{color:var(--gray)}
+.td-bold{font-weight:600}
+.td-actions{text-align:right}
+.td-actions-inner{display:flex;gap:6px;justify-content:flex-end;align-items:center}
+.tbl-empty{padding:48px;text-align:center;color:var(--gray);font-size:14px}
+.modal-overlay{position:fixed;inset:0;background:rgba(15,23,42,.5);z-index:1000;display:flex;align-items:center;justify-content:center;padding:20px}
+.modal-box{background:var(--white);border-radius:16px;width:100%;max-width:560px;max-height:90vh;overflow:auto;box-shadow:0 20px 60px rgba(0,0,0,.2)}
+.modal-box.wide{max-width:740px}
+.modal-box.narrow{max-width:440px}
+.modal-header{display:flex;align-items:center;justify-content:space-between;padding:20px 24px;border-bottom:1px solid var(--border)}
+.modal-title{font-size:16px;font-weight:700;color:var(--navy)}
+.modal-close{background:none;border:none;color:var(--gray);display:flex;padding:4px}
+.modal-body{padding:24px}
+.searchbar{position:relative;flex:1;min-width:220px}
+.searchbar input{width:100%;padding:9px 12px 9px 36px;border-radius:8px;border:1.5px solid var(--border);font-size:13px;color:var(--navy);outline:none}
+.searchbar svg{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--gray)}
+.toolbar{display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap;align-items:center}
+.charts-row{display:grid;grid-template-columns:2fr 1fr;gap:16px;margin-bottom:16px}
+.charts-row2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.chart-title{font-size:14px;font-weight:700;color:var(--navy);margin-bottom:2px}
+.chart-sub{font-size:12px;color:var(--gray);margin-bottom:16px}
+canvas{max-width:100%}
+.pdv-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:16px}
+.pdv-card{background:var(--white);border-radius:12px;border:1px solid var(--border);padding:20px;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+/* STEPS — 5 niveles */
+.steps-bar{display:flex;align-items:flex-start;margin-bottom:28px;overflow-x:auto;gap:0}
+.step-item{display:flex;align-items:flex-start;flex:1;min-width:72px}
+.step-circle{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;flex-shrink:0}
+.step-circle.done{background:var(--success);color:#fff}
+.step-circle.active{background:var(--primary);color:#fff}
+.step-circle.pending{background:#E2E8F0;color:var(--gray)}
+.step-col{display:flex;flex-direction:column;align-items:center}
+.step-label{font-size:10px;text-align:center;margin-top:4px;line-height:1.3;max-width:70px}
+.step-label.active{color:var(--navy);font-weight:600}
+.step-label.other{color:var(--gray)}
+.step-line{flex:1;height:2px;margin-top:15px}
+.step-line.done{background:var(--success)}
+.step-line.pending{background:#E2E8F0}
+.val-row{display:flex;align-items:center;gap:12px;padding:12px 16px;border-radius:10px;background:var(--bg);margin-bottom:8px}
+.val-icon{width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+#notif{position:fixed;top:20px;right:20px;z-index:9999;padding:12px 20px;border-radius:10px;color:#fff;font-size:14px;font-weight:600;display:none;align-items:center;gap:8px;box-shadow:0 8px 24px rgba(0,0,0,.2);animation:slideIn .3s ease}
+@keyframes slideIn{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
+#login-screen{display:flex;min-height:100vh}
+.login-left{flex:1;background:var(--navy);display:flex;flex-direction:column;padding:48px;justify-content:space-between}
+.login-right{width:440px;background:var(--white);display:flex;align-items:center;justify-content:center;padding:48px}
+.login-form{width:100%;max-width:360px}
+.quick-login-btn{padding:8px 14px;border-radius:8px;border:1.5px solid var(--border);background:var(--white);cursor:pointer;display:flex;align-items:center;gap:8px;text-align:left;width:100%;margin-bottom:8px}
+.err-box{padding:10px 14px;border-radius:8px;background:#FEE2E2;color:#991B1B;font-size:13px;margin-bottom:16px}
+.divider{border-top:1px solid var(--border);padding-top:16px;margin-top:16px}
+.recent-row{display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:8px;background:var(--bg);margin-bottom:8px}
+.pie-legend{display:flex;flex-direction:column;gap:6px;margin-top:8px}
+.pie-legend-row{display:flex;align-items:center;gap:8px;font-size:12px}
+.pie-dot{width:10px;height:10px;border-radius:2px;flex-shrink:0}
+.code-tag{font-size:11px;background:#F1F5F9;padding:2px 6px;border-radius:4px;color:var(--primary);font-family:monospace}
+/* ACTIVIDADES */
+.act-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px}
+.act-card{background:var(--white);border-radius:12px;border:1px solid var(--border);padding:20px;box-shadow:0 1px 3px rgba(0,0,0,.05);transition:box-shadow .15s}
+.act-card:hover{box-shadow:0 4px 16px rgba(0,0,0,.08)}
+.act-sku-pill{display:inline-flex;align-items:center;background:#EDE9FE;color:#5B21B6;border-radius:99px;padding:2px 8px;font-size:11px;font-weight:600;margin:2px}
+/* SWITCH */
+.switch{position:relative;display:inline-block;width:42px;height:22px}
+.switch input{opacity:0;width:0;height:0}
+.slider{position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background:#CBD5E1;transition:.3s;border-radius:22px}
+.slider:before{position:absolute;content:"";height:16px;width:16px;left:3px;bottom:3px;background:#fff;transition:.3s;border-radius:50%}
+input:checked+.slider{background:var(--success)}
+input:checked+.slider:before{transform:translateX(20px)}
+/* PUESTOS */
+.puesto-row{display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:8px;border:1.5px solid var(--border);margin-bottom:8px;cursor:pointer;transition:all .15s}
+.puesto-row:hover{border-color:var(--primary);background:rgba(14,165,233,.04)}
+.puesto-row.selected{border-color:var(--primary);background:rgba(14,165,233,.08)}
+.puesto-num{width:36px;height:36px;border-radius:8px;background:rgba(14,165,233,.12);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;color:var(--primary);flex-shrink:0}
+/* REP TYPES */
+.rep-types{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:20px}
+.rep-type-card{background:var(--white);border-radius:10px;border:1px solid var(--border);padding:16px 20px;cursor:pointer;display:flex;gap:12px;align-items:flex-start;transition:box-shadow .15s}
+.rep-type-card:hover{box-shadow:0 4px 12px rgba(0,0,0,.08)}
+.user-avatar{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0}
+.photo-drop{border:2px dashed var(--border);border-radius:12px;padding:40px;text-align:center;background:var(--bg);cursor:pointer;margin-bottom:20px}
+.photo-drop:hover{border-color:var(--primary)}
+.confirm-center{text-align:center;padding:8px 0 20px}
+.confirm-icon{width:64px;height:64px;border-radius:50%;margin:0 auto 16px;display:flex;align-items:center;justify-content:center}
+.summary-row{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);font-size:12px}
+.summary-row:last-child{border-bottom:none}
+.summary-key{color:var(--gray)}
+.summary-val{font-weight:600;color:var(--navy)}
+.visit-opt{padding:16px 20px;border-radius:10px;border:1.5px solid var(--border);background:var(--white);cursor:pointer;display:flex;align-items:center;gap:12px;text-align:left;width:100%;margin-bottom:10px;transition:border-color .15s}
+.visit-opt:hover,.visit-opt.highlighted{border-color:var(--primary);background:rgba(14,165,233,.05)}
+.sc-table input,.sc-table select{width:100%;padding:4px 8px;border-radius:6px;border:1px solid var(--border);font-size:12px}
+.multi-select-box{border:1.5px solid var(--border);border-radius:8px;max-height:160px;overflow-y:auto;padding:6px}
+.multi-select-item{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:6px;cursor:pointer;font-size:13px}
+.multi-select-item:hover{background:var(--bg)}
+.multi-select-item input[type=checkbox]{accent-color:var(--primary);width:14px;height:14px}
+.alert-info{background:#DBEAFE;border:1px solid #BFDBFE;border-radius:8px;padding:10px 14px;font-size:12px;color:#1E40AF;display:flex;align-items:center;gap:8px;margin-bottom:12px}
+.alert-warn{background:#FEF3C7;border:1px solid #FDE68A;border-radius:8px;padding:10px 14px;font-size:12px;color:#92400E;display:flex;align-items:center;gap:8px;margin-bottom:12px}
+@media(max-width:768px){.charts-row,.charts-row2{grid-template-columns:1fr}.login-left{display:none}.login-right{width:100%}}
+/* ── PANEL DE FILTRO — diseño prototipo ── */
+@keyframes fadeDown{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
+.fp-select-wrap{position:relative;background:var(--white);border:1.5px solid var(--border);border-radius:8px;padding:8px 36px 8px 14px;transition:border-color .2s}
+.fp-select-wrap:focus-within{border-color:var(--purple)}
+.fp-label{display:block;font-size:11px;font-weight:600;color:var(--gray);text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px}
+.fp-select{width:100%;border:none;outline:none;font-size:14px;color:var(--navy);background:transparent;appearance:none;-webkit-appearance:none;cursor:pointer;font-weight:500}
+.fp-arrow{position:absolute;right:12px;top:50%;transform:translateY(-50%);color:var(--gray);font-size:11px;pointer-events:none}
+.fp-date-wrap{position:relative;background:var(--white);border:1.5px solid var(--border);border-radius:8px;padding:8px 40px 8px 14px;transition:border-color .2s}
+.fp-date-wrap:focus-within{border-color:var(--purple)}
+.fp-date-label{display:block;font-size:11px;font-weight:600;color:var(--gray);letter-spacing:.4px;margin-bottom:4px}
+.fp-date-input{width:100%;border:none;outline:none;font-size:14px;color:var(--navy);background:transparent;appearance:none;-webkit-appearance:none;font-weight:500;cursor:pointer}
+.fp-date-input::-webkit-calendar-picker-indicator{opacity:0;position:absolute;right:0;top:0;width:100%;height:100%;cursor:pointer}
+.fp-cal-icon{position:absolute;right:12px;top:50%;transform:translateY(-50%);pointer-events:none;display:flex}
+@media(max-width:900px){#filter-panel .fp-grid-3{grid-template-columns:1fr 1fr!important}}
+@media(max-width:600px){#filter-panel .fp-grid-3{grid-template-columns:1fr!important}}
+</style>
+</head>
+<body>
+<div id="notif"></div>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-left">
+    <div style="display:flex;align-items:center;gap:10px">
+      <div class="sb-logo" style="width:36px;height:36px;border-radius:9px">
+        <svg width="18" height="18" fill="none" stroke="#fff" stroke-width="2.5" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+      </div>
+      <span style="font-size:16px;font-weight:700;color:#fff">TradeMart</span>
+    </div>
+    <div>
+      <h2 style="font-size:36px;font-weight:700;color:#fff;line-height:1.2;margin-bottom:16px">Plataforma de<br>Trade Marketing</h2>
+      <p style="font-size:15px;color:rgba(255,255,255,.55);line-height:1.7">Gestión centralizada de puntos de venta, storechecks y reportes estratégicos en tiempo real.</p>
+      <div style="margin-top:40px;display:flex;gap:24px;flex-wrap:wrap">
+        <div><div style="font-size:28px;font-weight:700;color:var(--primary)">6</div><div style="font-size:12px;color:rgba(255,255,255,.4)">PDVs Activos</div></div>
+        <div><div style="font-size:28px;font-weight:700;color:var(--primary)">5</div><div style="font-size:12px;color:rgba(255,255,255,.4)">SKUs Vigentes</div></div>
+        <div><div style="font-size:28px;font-weight:700;color:var(--primary)">72%</div><div style="font-size:12px;color:rgba(255,255,255,.4)">Cobertura</div></div>
+      </div>
+    </div>
+    <p style="font-size:11px;color:rgba(255,255,255,.25)">© 2026 TradeMart — Curso Integrador II · Grupo 1 · UPN Lima</p>
+  </div>
+  <div class="login-right">
+    <div class="login-form">
+      <h3 style="font-size:22px;font-weight:700;color:var(--navy);margin-bottom:6px">Iniciar sesión</h3>
+      <p style="font-size:13px;color:var(--gray);margin-bottom:32px">Ingresa tus credenciales para continuar</p>
+      <div class="field"><label>Correo electrónico</label><input id="inp-email" type="email" placeholder="usuario@trademart.pe"></div>
+      <div class="field"><label>Contraseña</label><input id="inp-pass" type="password" placeholder="••••••••"></div>
+      <div id="login-err" style="display:none" class="err-box"></div>
+      <button class="btn btn-primary btn-lg btn-full" onclick="doLogin()" style="margin-bottom:24px">Ingresar al sistema</button>
+      <div class="divider">
+        <p style="font-size:11px;color:var(--gray);margin-bottom:10px;text-transform:uppercase;letter-spacing:.5px;font-weight:600">Acceso rápido por rol</p>
+        <button class="quick-login-btn" onclick="quickLogin('admin@trademart.pe','admin123')"><span style="width:8px;height:8px;border-radius:50%;background:#8B5CF6;flex-shrink:0"></span><span style="font-size:13px;color:var(--navy);font-weight:500">Administrador</span><span style="font-size:11px;color:var(--gray);margin-left:auto">admin@trademart.pe</span></button>
+        <button class="quick-login-btn" onclick="quickLogin('ana.flores@trademart.pe','analista123')"><span style="width:8px;height:8px;border-radius:50%;background:var(--primary);flex-shrink:0"></span><span style="font-size:13px;color:var(--navy);font-weight:500">Analista</span><span style="font-size:11px;color:var(--gray);margin-left:auto">ana.flores@trademart.pe</span></button>
+        <button class="quick-login-btn" onclick="quickLogin('carlos.vega@trademart.pe','campo123')"><span style="width:8px;height:8px;border-radius:50%;background:var(--success);flex-shrink:0"></span><span style="font-size:13px;color:var(--navy);font-weight:500">Mercaderista</span><span style="font-size:11px;color:var(--gray);margin-left:auto">carlos.vega@trademart.pe</span></button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app" style="display:none">
+  <aside id="sidebar">
+    <div class="sb-header">
+      <div class="sb-logo"><svg width="16" height="16" fill="none" stroke="#fff" stroke-width="2.5" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></div>
+      <div id="sb-brand"><p style="font-size:13px;font-weight:700;color:#fff;margin:0">TradeMart</p><p style="font-size:10px;color:rgba(255,255,255,.4);letter-spacing:1px;margin:0">TRADE MARKETING</p></div>
+      <button class="sb-toggle" onclick="toggleSidebar()"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
+    </div>
+    <nav class="sb-nav" id="sb-nav"></nav>
+    <div class="sb-footer">
+      <div class="sb-user" id="sb-user-info"></div>
+      <button class="sb-logout" onclick="doLogout()">
+        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        <span id="sb-logout-label">Cerrar sesión</span>
+      </button>
+    </div>
+  </aside>
+  <div id="main">
+    <header id="topbar">
+      <h1 id="page-title" style="font-size:16px;font-weight:700;color:var(--navy)">Dashboard</h1>
+      <div style="display:flex;align-items:center;gap:12px">
+        <div style="position:relative"><svg width="18" height="18" fill="none" stroke="var(--gray)" stroke-width="2" viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg><span style="position:absolute;top:-3px;right:-3px;width:8px;height:8px;background:var(--danger);border-radius:50%;border:2px solid #fff"></span></div>
+        <div id="topbar-avatar" style="width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700"></div>
+      </div>
+    </header>
+    <div id="content"></div>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div id="modal-overlay" class="modal-overlay" style="display:none" onclick="closeModal(event)">
+  <div class="modal-box" id="modal-box">
+    <div class="modal-header">
+      <h3 class="modal-title" id="modal-title"></h3>
+      <button class="modal-close" onclick="closeModalDirect()"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div class="modal-body" id="modal-body"></div>
+  </div>
+</div>
+
+<script>
+// ═══════════════ DATA ═══════════════
+const USERS_DB=[
+  {id:1,name:"Admin Sistema",email:"admin@trademart.pe",role:"admin",password:"admin123",status:"Activo"},
+  {id:2,name:"Ana Flores",email:"ana.flores@trademart.pe",role:"analista",password:"analista123",status:"Activo"},
+  {id:3,name:"Carlos Vega",email:"carlos.vega@trademart.pe",role:"mercaderista",password:"campo123",status:"Activo"},
+  {id:4,name:"María Torres",email:"maria.torres@trademart.pe",role:"mercaderista",password:"campo123",status:"Activo"},
+];
+let USERS=[...USERS_DB];
+
+// PDV con puestos de mercado
+let PDV_DATA=[
+  {id:1,nombre:"Mercado San Miguel",codigo:"PDV-001",distrito:"San Miguel",tipo:"Mercado",estado:"Activo",mercaderista:"Carlos Vega",visitas:12,pendiente:false,
+   puestos:[{num:"P-01",nombre:"Abarrotes Rosita"},{num:"P-02",nombre:"Conservas El Buen Precio"},{num:"P-03",nombre:"Distribuidora Lima Norte"},{num:"P-07",nombre:"Lácteos y Más"},{num:"P-11",nombre:"Bodega Central"}]},
+  {id:2,nombre:"Plaza Vea Surco",codigo:"PDV-002",distrito:"Surco",tipo:"Supermercado",estado:"Activo",mercaderista:"María Torres",visitas:8,pendiente:true,
+   puestos:[{num:"P-01",nombre:"Sección Bebidas"},{num:"P-02",nombre:"Sección Lácteos"},{num:"P-03",nombre:"Sección Snacks"}]},
+  {id:3,nombre:"Metro San Isidro",codigo:"PDV-003",distrito:"San Isidro",tipo:"Supermercado",estado:"Activo",mercaderista:"Carlos Vega",visitas:15,pendiente:false,
+   puestos:[{num:"P-01",nombre:"Góndola A - Bebidas"},{num:"P-02",nombre:"Góndola B - Lácteos"},{num:"P-03",nombre:"Caja Especial 1"},{num:"P-04",nombre:"Caja Especial 2"}]},
+  {id:4,nombre:"Mercado Mayorista",codigo:"PDV-004",distrito:"La Victoria",tipo:"Mercado",estado:"Inactivo",mercaderista:"María Torres",visitas:3,pendiente:false,
+   puestos:[{num:"P-01",nombre:"Puesto Central A"},{num:"P-02",nombre:"Puesto Central B"}]},
+  {id:5,nombre:"Wong Miraflores",codigo:"PDV-005",distrito:"Miraflores",tipo:"Supermercado",estado:"Activo",mercaderista:"Carlos Vega",visitas:20,pendiente:true,
+   puestos:[{num:"P-01",nombre:"Sección Gourmet"},{num:"P-02",nombre:"Sección Masivos"},{num:"P-03",nombre:"Punto Extra 1"},{num:"P-04",nombre:"Punto Extra 2"},{num:"P-05",nombre:"Caja Rápida"}]},
+  {id:6,nombre:"Tottus San Borja",codigo:"PDV-006",distrito:"San Borja",tipo:"Supermercado",estado:"Activo",mercaderista:"María Torres",visitas:11,pendiente:false,
+   puestos:[{num:"P-01",nombre:"Pasillo Central"},{num:"P-02",nombre:"Pasillo Lateral"},{num:"P-03",nombre:"Exhibición Frontal"}]},
+];
+
+let SKU_DATA=[
+  {id:1,codigo:"SKU-001",nombre:"Inca Kola 500ml",marca:"Coca-Cola",categoria:"Bebidas",activo:true},
+  {id:2,codigo:"SKU-002",nombre:"Coca-Cola 1.5L",marca:"Coca-Cola",categoria:"Bebidas",activo:true},
+  {id:3,codigo:"SKU-003",nombre:"Gloria Leche 1L",marca:"Gloria",categoria:"Lácteos",activo:true},
+  {id:4,codigo:"SKU-004",nombre:"Sublime 25g",marca:"Nestlé",categoria:"Confitería",activo:true},
+  {id:5,codigo:"SKU-005",nombre:"Pringles 120g",marca:"Kellanova",categoria:"Snacks",activo:false},
+  {id:6,codigo:"SKU-006",nombre:"Nescafé 200g",marca:"Nestlé",categoria:"Cafés",activo:true},
+];
+
+// Actividades con SKUs asociados y estado Vigente/Caducada
+let ACTIVIDADES=[
+  {id:1,nombre:"Promo Verano 2026",tipo:"Descuento",estado:"Vigente",inicio:"2026-01-01",fin:"2026-04-30",skuIds:[1,2],descripcion:"Descuento del 15% en bebidas seleccionadas"},
+  {id:2,nombre:"Lanzamiento Gloria Forte",tipo:"Exhibición",estado:"Vigente",inicio:"2026-03-01",fin:"2026-05-31",skuIds:[3],descripcion:"Exhibición preferencial en góndola principal"},
+  {id:3,nombre:"Campaña Nestlé Día de la Madre",tipo:"Mixta",estado:"Vigente",inicio:"2026-05-01",fin:"2026-05-15",skuIds:[4,6],descripcion:"Pack especial + exhibición temática"},
+  {id:4,nombre:"Lanzamiento Snacks 2025",tipo:"Exhibición",estado:"Caducada",inicio:"2025-06-01",fin:"2025-09-30",skuIds:[5],descripcion:"Actividad caducada"},
+];
+
+let SC_DATA=[
+  {id:1,pdv:"Mercado San Miguel",puesto:"P-01 — Abarrotes Rosita",fecha:"2026-04-24",mercaderista:"Carlos Vega",estado:"Completado",skus:6,foto:true,actividad:"Promo Verano 2026",observaciones:""},
+  {id:2,pdv:"Metro San Isidro",puesto:"P-02 — Góndola B - Lácteos",fecha:"2026-04-24",mercaderista:"Carlos Vega",estado:"En Proceso",skus:4,foto:true,actividad:"Lanzamiento Gloria Forte",observaciones:""},
+  {id:3,pdv:"Wong Miraflores",puesto:"P-01 — Sección Gourmet",fecha:"2026-04-23",mercaderista:"María Torres",estado:"Completado",skus:6,foto:true,actividad:"Promo Verano 2026",observaciones:""},
+  {id:4,pdv:"Tottus San Borja",puesto:"P-01 — Pasillo Central",fecha:"2026-04-23",mercaderista:"María Torres",estado:"Pendiente",skus:0,foto:false,actividad:"Lanzamiento Gloria Forte",observaciones:"Puesto cerrado por remodelación"},
+  {id:5,pdv:"Plaza Vea Surco",puesto:"P-02 — Sección Lácteos",fecha:"2026-04-22",mercaderista:"María Torres",estado:"Completado",skus:5,foto:true,actividad:"Promo Verano 2026",observaciones:""},
+];
+
+const ROLE_LABELS={admin:"Administrador",analista:"Analista",mercaderista:"Mercaderista"};
+const ROLE_COLORS={admin:"#8B5CF6",analista:"#0EA5E9",mercaderista:"#10B981"};
+const NAV_ITEMS=[
+  {id:"dashboard",label:"Dashboard",roles:["admin","analista","mercaderista"],icon:'<svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>'},
+  {id:"pdv",label:"Puntos de Venta",roles:["admin","analista","mercaderista"],icon:'<svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>'},
+  {id:"storecheck",label:"Storecheck",roles:["admin","analista","mercaderista"],icon:'<svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>'},
+  {id:"skus",label:"Catálogo SKUs",roles:["admin","analista"],icon:'<svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>'},
+  {id:"actividades",label:"Actividades",roles:["admin","analista"],icon:'<svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>'},
+  {id:"reportes",label:"Reportes",roles:["admin","analista"],icon:'<svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>'},
+  {id:"validaciones",label:"Validaciones",roles:["admin","analista"],icon:'<svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>'},
+  {id:"usuarios",label:"Usuarios",roles:["admin"],icon:'<svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>'},
+];
+
+// ═══════════════ STATE ═══════════════
+let currentUser=null,currentView="dashboard",sidebarCollapsed=false;
+let scStep=0,scSelectedPDV=null;
+// scForm ahora incluye puesto y actividad como pasos separados
+let scForm={pdv:"",puestoNum:"",puestoNombre:"",actividad:"",actividadId:null,productos:[],observaciones:""};
+let chartInstances={};
+let filterPanelOpen=false;
+// Para modal de puestos
+let viewingPDVId=null;
+
+// ═══════════════ UTILS ═══════════════
+const IC={
+  search:`<svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>`,
+  plus:`<svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>`,
+  filter:`<svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>`,
+  download:`<svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>`,
+  upload:`<svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>`,
+  edit:`<svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>`,
+  trash:`<svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>`,
+  eye:`<svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>`,
+  camera:`<svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>`,
+  qr:`<svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>`,
+  check:`<svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>`,
+  checkCircle:`<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>`,
+  alert:`<svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>`,
+  save:`<svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>`,
+  chevR:`<svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>`,
+  back:`<svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>`,
+  store:`<svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>`,
+  mapPin:`<svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>`,
+  listPuesto:`<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>`,
+};
+
+function badge(t,type){return`<span class="badge badge-${type}">${t}</span>`}
+function showNotif(msg,type="success"){
+  const el=document.getElementById("notif");
+  el.style.background=type==="success"?"#10B981":"#EF4444";
+  el.innerHTML=`<svg width="16" height="16" fill="none" stroke="#fff" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> ${msg}`;
+  el.style.display="flex";clearTimeout(window._nt);
+  window._nt=setTimeout(()=>{el.style.display="none"},3200);
+}
+function avatarInitials(n){return n.split(" ").map(w=>w[0]).slice(0,2).join("")}
+function todayISO(){return new Date().toISOString().split("T")[0]}
+function destroyCharts(){Object.values(chartInstances).forEach(c=>{try{c.destroy()}catch(e){}});chartInstances={}}
+function openModal(title,body,size=""){
+  document.getElementById("modal-title").textContent=title;
+  document.getElementById("modal-body").innerHTML=body;
+  document.getElementById("modal-box").className="modal-box"+(size?" "+size:"");
+  document.getElementById("modal-overlay").style.display="flex";
+}
+function closeModal(e){if(e.target===document.getElementById("modal-overlay"))closeModalDirect()}
+function closeModalDirect(){document.getElementById("modal-overlay").style.display="none"}
+
+// ═══════════════ AUTH ═══════════════
+function quickLogin(e,p){document.getElementById("inp-email").value=e;document.getElementById("inp-pass").value=p}
+function doLogin(){
+  const email=document.getElementById("inp-email").value.trim();
+  const pass=document.getElementById("inp-pass").value;
+  const found=USERS_DB.find(u=>u.email===email&&u.password===pass);
+  if(found){currentUser=found;document.getElementById("login-screen").style.display="none";document.getElementById("app").style.display="flex";buildSidebar();navigate("dashboard")}
+  else{const el=document.getElementById("login-err");el.textContent="Credenciales incorrectas. Intente nuevamente.";el.style.display="block"}
+}
+document.getElementById("inp-pass").addEventListener("keydown",e=>{if(e.key==="Enter")doLogin()});
+function doLogout(){currentUser=null;document.getElementById("app").style.display="none";document.getElementById("login-screen").style.display="flex";document.getElementById("inp-email").value="";document.getElementById("inp-pass").value="";document.getElementById("login-err").style.display="none"}
+
+// ═══════════════ SIDEBAR ═══════════════
+function buildSidebar(){
+  const nav=document.getElementById("sb-nav");
+  const vis=NAV_ITEMS.filter(n=>n.roles.includes(currentUser.role));
+  nav.innerHTML=vis.map(item=>`<button class="nav-btn ${item.id===currentView?'active':''}" onclick="navigate('${item.id}')" id="nav-${item.id}">${item.icon}<span class="nav-label">${item.label}</span></button>`).join("");
+  document.getElementById("sb-user-info").innerHTML=`<div class="sb-user-name">${currentUser.name}</div><div class="sb-user-role">${ROLE_LABELS[currentUser.role]}</div>`;
+  const av=document.getElementById("topbar-avatar");av.style.background=ROLE_COLORS[currentUser.role]+"22";av.style.color=ROLE_COLORS[currentUser.role];av.textContent=avatarInitials(currentUser.name);
+}
+function toggleSidebar(){
+  sidebarCollapsed=!sidebarCollapsed;
+  document.getElementById("sidebar").classList.toggle("collapsed",sidebarCollapsed);
+  document.getElementById("sb-brand").style.display=sidebarCollapsed?"none":"block";
+  document.getElementById("sb-user-info").style.display=sidebarCollapsed?"none":"block";
+  document.getElementById("sb-logout-label").style.display=sidebarCollapsed?"none":"inline";
+}
+function navigate(view){
+  currentView=view;
+  document.querySelectorAll(".nav-btn").forEach(b=>b.classList.remove("active"));
+  const nb=document.getElementById("nav-"+view);if(nb)nb.classList.add("active");
+  const titles={dashboard:"Dashboard",pdv:"Puntos de Venta",storecheck:"Storecheck",skus:"Catálogo SKUs",actividades:"Actividades Promocionales",reportes:"Reportes",validaciones:"Validaciones",usuarios:"Usuarios"};
+  document.getElementById("page-title").textContent=titles[view]||"";
+  destroyCharts();renderView(view);
+}
+function renderView(v){
+  const c=document.getElementById("content");
+  if(v==="dashboard")c.innerHTML=renderDashboard();
+  else if(v==="pdv")c.innerHTML=renderPDV();
+  else if(v==="storecheck")c.innerHTML=renderStorecheck();
+  else if(v==="skus")c.innerHTML=renderSKUs();
+  else if(v==="actividades")c.innerHTML=renderActividades();
+  else if(v==="reportes")c.innerHTML=renderReportes();
+  else if(v==="validaciones")c.innerHTML=renderValidaciones();
+  else if(v==="usuarios")c.innerHTML=renderUsuarios();
+  if(v==="dashboard")initDashboardCharts();
+}
+
+// ═══════════════ DASHBOARD ═══════════════
+function renderDashboard(){
+  const activosSKU=SKU_DATA.filter(s=>s.activo).length;
+  const inactivosSKU=SKU_DATA.filter(s=>!s.activo).length;
+  const compSC=SC_DATA.filter(s=>s.estado==="Completado").length;
+  const pendSC=SC_DATA.filter(s=>s.estado==="Pendiente").length;
+  return`
+  <!-- KPIs -->
+  <div class="kpi-grid">
+    <div class="kpi-card">
+      <div><div class="kpi-label">PDVs Activos</div><div class="kpi-value">5</div><div class="kpi-sub up" style="display:flex;align-items:center;gap:4px"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="18 15 12 9 6 15"/></svg>+1 este mes</div></div>
+      <div class="kpi-icon" style="background:rgba(14,165,233,.1)"><svg width="20" height="20" fill="none" stroke="var(--primary)" stroke-width="2" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></div>
+    </div>
+    <div class="kpi-card">
+      <div><div class="kpi-label">Storechecks hoy</div><div class="kpi-value">${compSC}</div><div class="kpi-sub up" style="display:flex;align-items:center;gap:4px"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="18 15 12 9 6 15"/></svg>${compSC} completados · ${pendSC} pendientes</div></div>
+      <div class="kpi-icon" style="background:rgba(16,185,129,.1)"><svg width="20" height="20" fill="none" stroke="var(--success)" stroke-width="2" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div>
+    </div>
+    <div class="kpi-card">
+      <div><div class="kpi-label">SKUs activos</div><div class="kpi-value">${activosSKU}</div><div class="kpi-sub" style="display:flex;align-items:center;gap:4px;color:var(--warning)"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="18 9 12 15 6 9"/></svg>${inactivosSKU} desactivado(s)</div></div>
+      <div class="kpi-icon" style="background:rgba(139,92,246,.1)"><svg width="20" height="20" fill="none" stroke="var(--purple)" stroke-width="2" viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg></div>
+    </div>
+    <div class="kpi-card">
+      <div><div class="kpi-label">Cobertura semanal</div><div class="kpi-value">72%</div><div class="kpi-sub up" style="display:flex;align-items:center;gap:4px"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="18 15 12 9 6 15"/></svg>+5 pp vs semana anterior</div></div>
+      <div class="kpi-icon" style="background:rgba(245,158,11,.1)"><svg width="20" height="20" fill="none" stroke="var(--warning)" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></div>
+    </div>
+  </div>
+
+  <!-- FILA 1: Combo Bar+Línea + Doughnut -->
+  <div class="charts-row" style="margin-bottom:16px">
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px">
+        <div>
+          <div class="chart-title">Visitas Planificadas vs Ejecutadas — Esta semana</div>
+          <div class="chart-sub">Barras: cantidad de PDVs · Línea morada: % de cobertura diaria</div>
+        </div>
+        <div style="display:flex;gap:6px">
+          ${badge("Lun–Vie","info")}
+        </div>
+      </div>
+      <canvas id="chart-cobertura" height="195"></canvas>
+    </div>
+    <div class="card" style="display:flex;flex-direction:column">
+      <div class="chart-title">Estado de Storechecks</div>
+      <div class="chart-sub">Total registrados este período</div>
+      <!-- Doughnut con número en el centro -->
+      <div style="position:relative;flex:1;display:flex;align-items:center;justify-content:center">
+        <canvas id="chart-pie" style="max-height:190px"></canvas>
+        <div style="position:absolute;text-align:center;pointer-events:none">
+          <div style="font-size:26px;font-weight:700;color:var(--navy)">${SC_DATA.length}</div>
+          <div style="font-size:10px;color:var(--gray);font-weight:600;text-transform:uppercase;letter-spacing:.5px">Total</div>
+        </div>
+      </div>
+      <div class="pie-legend" style="margin-top:12px">
+        <div class="pie-legend-row"><div class="pie-dot" style="background:#10B981;border-radius:4px"></div><span style="flex:1;color:var(--gray);font-size:12px">Completados</span><strong style="font-size:12px">${SC_DATA.filter(s=>s.estado==="Completado").length} (${Math.round(SC_DATA.filter(s=>s.estado==="Completado").length/SC_DATA.length*100)}%)</strong></div>
+        <div class="pie-legend-row"><div class="pie-dot" style="background:#F59E0B;border-radius:4px"></div><span style="flex:1;color:var(--gray);font-size:12px">En Proceso</span><strong style="font-size:12px">${SC_DATA.filter(s=>s.estado==="En Proceso").length} (${Math.round(SC_DATA.filter(s=>s.estado==="En Proceso").length/SC_DATA.length*100)}%)</strong></div>
+        <div class="pie-legend-row"><div class="pie-dot" style="background:#CBD5E1;border-radius:4px"></div><span style="flex:1;color:var(--gray);font-size:12px">Pendientes</span><strong style="font-size:12px">${SC_DATA.filter(s=>s.estado==="Pendiente").length} (${Math.round(SC_DATA.filter(s=>s.estado==="Pendiente").length/SC_DATA.length*100)}%)</strong></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FILA 2: Barras horizontales por mercaderista + Línea tendencia cobertura mensual -->
+  <div class="charts-row2">
+    <div class="card">
+      <div class="chart-title">Storechecks por Mercaderista</div>
+      <div class="chart-sub">Completados vs Pendientes — semana actual</div>
+      <canvas id="chart-merc" height="160"></canvas>
+    </div>
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:2px">
+        <div>
+          <div class="chart-title">Evolución de Cobertura Mensual</div>
+          <div class="chart-sub">% real alcanzado · Línea roja: meta mínima 80%</div>
+        </div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end">
+          <span style="font-size:11px;font-weight:600;color:var(--success);display:flex;align-items:center;gap:3px"><span style="display:inline-block;width:14px;height:3px;background:var(--primary);border-radius:2px"></span>Cobertura</span>
+          <span style="font-size:11px;font-weight:600;color:var(--danger);display:flex;align-items:center;gap:3px"><span style="display:inline-block;width:14px;height:3px;background:var(--danger);border-radius:2px;border-bottom:2px dashed var(--danger)"></span>Meta 80%</span>
+        </div>
+      </div>
+      <canvas id="chart-trend" height="160"></canvas>
+    </div>
+  </div>
+
+  <!-- FILA 3: Actividad reciente -->
+  <div style="margin-top:16px">
+    <div class="card card-0">
+      <div style="padding:14px 20px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
+        <div style="font-size:14px;font-weight:700;color:var(--navy)">Actividad Reciente</div>
+        <button class="btn btn-ghost btn-sm" onclick="navigate('storecheck')" style="font-size:12px;color:var(--primary)">Ver todos →</button>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:0">
+        ${SC_DATA.slice(0,4).map((sc,i)=>`
+          <div style="display:flex;align-items:center;gap:12px;padding:12px 20px;border-bottom:1px solid var(--border);border-right:${i%2===0?'1px solid var(--border)':'none'}">
+            <div style="width:34px;height:34px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;background:${sc.estado==='Completado'?'rgba(16,185,129,.12)':sc.estado==='En Proceso'?'rgba(245,158,11,.12)':'rgba(148,163,184,.12)'}">
+              ${sc.estado==='Completado'?`<svg width="15" height="15" fill="none" stroke="#10B981" stroke-width="2.5" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>`:sc.estado==='En Proceso'?`<svg width="15" height="15" fill="none" stroke="#F59E0B" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`:`<svg width="15" height="15" fill="none" stroke="#94A3B8" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/></svg>`}
+            </div>
+            <div style="flex:1;min-width:0">
+              <div style="font-size:13px;font-weight:600;color:var(--navy);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${sc.pdv}</div>
+              <div style="font-size:11px;color:var(--gray);margin-top:1px">${sc.mercaderista} · ${sc.fecha}</div>
+            </div>
+            ${badge(sc.estado,sc.estado==="Completado"?"success":sc.estado==="En Proceso"?"warning":"default")}
+          </div>`).join("")}
+      </div>
+    </div>
+  </div>`;
+}
+
+function initDashboardCharts(){
+  const cob=document.getElementById("chart-cobertura");
+  const pie=document.getElementById("chart-pie");
+  const merc=document.getElementById("chart-merc");
+  const trend=document.getElementById("chart-trend");
+  if(!cob||!pie||!merc||!trend)return;
+
+  // Datos reales derivados
+  const planDia=[8,10,7,9,6];
+  const execDia=[7,9,5,8,3];
+  const pctDia=planDia.map((p,i)=>Math.round(execDia[i]/p*100));
+
+  // ── GRÁFICO 1: Combo Barras + Línea de cobertura ──
+  chartInstances.cob=new Chart(cob,{
+    type:"bar",
+    data:{
+      labels:["Lunes","Martes","Miércoles","Jueves","Viernes"],
+      datasets:[
+        {
+          label:"PDVs Planificados",
+          data:planDia,
+          backgroundColor:"rgba(226,232,240,0.8)",
+          borderColor:"#CBD5E1",
+          borderWidth:1,
+          borderRadius:{topLeft:5,topRight:5},
+          borderSkipped:false,
+          order:2,
+          yAxisID:"y"
+        },
+        {
+          label:"PDVs Ejecutados",
+          data:execDia,
+          backgroundColor:"rgba(14,165,233,0.85)",
+          borderColor:"#0284C7",
+          borderWidth:1,
+          borderRadius:{topLeft:5,topRight:5},
+          borderSkipped:false,
+          order:2,
+          yAxisID:"y"
+        },
+        {
+          label:"% Cobertura",
+          data:pctDia,
+          type:"line",
+          borderColor:"#8B5CF6",
+          backgroundColor:"rgba(139,92,246,0.08)",
+          borderWidth:2.5,
+          pointBackgroundColor:"#8B5CF6",
+          pointBorderColor:"#fff",
+          pointBorderWidth:2,
+          pointRadius:6,
+          pointHoverRadius:8,
+          tension:0.35,
+          fill:false,
+          order:1,
+          yAxisID:"y2"
+        }
+      ]
+    },
+    options:{
+      responsive:true,
+      interaction:{mode:"index",intersect:false},
+      plugins:{
+        legend:{
+          display:true,
+          position:"bottom",
+          labels:{boxWidth:12,font:{size:11},padding:16,usePointStyle:false}
+        },
+        tooltip:{
+          backgroundColor:"#fff",
+          borderColor:"#E2E8F0",
+          borderWidth:1,
+          titleColor:"#0F172A",
+          bodyColor:"#64748B",
+          padding:10,
+          callbacks:{
+            label:(ctx)=>{
+              if(ctx.dataset.label==="% Cobertura") return ` Cobertura: ${ctx.parsed.y}%`;
+              return ` ${ctx.dataset.label}: ${ctx.parsed.y} PDVs`;
+            }
+          }
+        }
+      },
+      scales:{
+        x:{
+          grid:{display:false},
+          border:{display:false},
+          ticks:{font:{size:11},color:"#94A3B8"}
+        },
+        y:{
+          min:0,
+          max:12,
+          position:"left",
+          grid:{
+            color:"#E2E8F0",
+            drawBorder:false,
+            lineWidth:1
+          },
+          border:{display:false,dash:[3,3]},
+          ticks:{
+            font:{size:11},
+            color:"#94A3B8",
+            stepSize:2,
+            callback:v=>v+" PDVs"
+          }
+        },
+        y2:{
+          min:0,
+          max:100,
+          position:"right",
+          grid:{display:false},
+          border:{display:false},
+          ticks:{
+            font:{size:11},
+            color:"#8B5CF6",
+            stepSize:20,
+            callback:v=>v+"%"
+          }
+        }
+      }
+    }
+  });
+
+  // ── GRÁFICO 2: Doughnut estado storechecks ──
+  const nComp=SC_DATA.filter(s=>s.estado==="Completado").length;
+  const nProc=SC_DATA.filter(s=>s.estado==="En Proceso").length;
+  const nPend=SC_DATA.filter(s=>s.estado==="Pendiente").length;
+  chartInstances.pie=new Chart(pie,{
+    type:"doughnut",
+    data:{
+      labels:["Completados","En Proceso","Pendientes"],
+      datasets:[{
+        data:[nComp,nProc,nPend],
+        backgroundColor:["#10B981","#F59E0B","#CBD5E1"],
+        hoverBackgroundColor:["#059669","#D97706","#94A3B8"],
+        borderWidth:3,
+        borderColor:"#fff",
+        hoverOffset:6
+      }]
+    },
+    options:{
+      responsive:true,
+      cutout:"68%",
+      plugins:{
+        legend:{display:false},
+        tooltip:{
+          backgroundColor:"#fff",
+          borderColor:"#E2E8F0",
+          borderWidth:1,
+          titleColor:"#0F172A",
+          bodyColor:"#64748B",
+          callbacks:{
+            label:(ctx)=>{
+              const total=ctx.dataset.data.reduce((a,b)=>a+b,0);
+              return ` ${ctx.label}: ${ctx.parsed} (${Math.round(ctx.parsed/total*100)}%)`;
+            }
+          }
+        }
+      }
+    }
+  });
+
+  // ── GRÁFICO 3: Barras horizontales por mercaderista ──
+  const mercaderistas=[...new Set(SC_DATA.map(s=>s.mercaderista))];
+  const dataComp=mercaderistas.map(m=>SC_DATA.filter(s=>s.mercaderista===m&&s.estado==="Completado").length);
+  const dataProc=mercaderistas.map(m=>SC_DATA.filter(s=>s.mercaderista===m&&s.estado==="En Proceso").length);
+  const dataPend=mercaderistas.map(m=>SC_DATA.filter(s=>s.mercaderista===m&&s.estado==="Pendiente").length);
+  chartInstances.merc=new Chart(merc,{
+    type:"bar",
+    data:{
+      labels:mercaderistas,
+      datasets:[
+        {label:"Completados",data:dataComp,backgroundColor:"#10B981",borderRadius:4,borderSkipped:false},
+        {label:"En Proceso",data:dataProc,backgroundColor:"#F59E0B",borderRadius:4,borderSkipped:false},
+        {label:"Pendientes",data:dataPend,backgroundColor:"#E2E8F0",borderRadius:4,borderSkipped:false}
+      ]
+    },
+    options:{
+      indexAxis:"y",
+      responsive:true,
+      interaction:{mode:"index",intersect:false},
+      plugins:{
+        legend:{
+          display:true,
+          position:"bottom",
+          labels:{boxWidth:11,font:{size:11},padding:14}
+        },
+        tooltip:{
+          backgroundColor:"#fff",
+          borderColor:"#E2E8F0",
+          borderWidth:1,
+          titleColor:"#0F172A",
+          bodyColor:"#64748B"
+        }
+      },
+      scales:{
+        x:{
+          stacked:true,
+          grid:{color:"#E2E8F0",drawBorder:false,lineWidth:1},
+          border:{display:false,dash:[3,3]},
+          ticks:{font:{size:11},color:"#94A3B8",stepSize:1,callback:v=>v+" SC"}
+        },
+        y:{
+          stacked:true,
+          grid:{display:false},
+          border:{display:false},
+          ticks:{font:{size:11},color:"#0F172A",font:{size:12,weight:"600"}}
+        }
+      }
+    }
+  });
+
+  // ── GRÁFICO 4: Línea evolución cobertura + meta ──
+  const meses=["Ene","Feb","Mar","Abr","May","Jun"];
+  const cobReal=[58,63,67,72,72,null];
+  const metaLinea=[80,80,80,80,80,80];
+  chartInstances.trend=new Chart(trend,{
+    type:"line",
+    data:{
+      labels:meses,
+      datasets:[
+        {
+          label:"Cobertura real (%)",
+          data:cobReal,
+          borderColor:"#0EA5E9",
+          backgroundColor:"rgba(14,165,233,0.1)",
+          borderWidth:2.5,
+          pointBackgroundColor:"#0EA5E9",
+          pointBorderColor:"#fff",
+          pointBorderWidth:2,
+          pointRadius:5,
+          pointHoverRadius:7,
+          tension:0.35,
+          fill:true,
+          spanGaps:false
+        },
+        {
+          label:"Meta mínima (80%)",
+          data:metaLinea,
+          borderColor:"#EF4444",
+          backgroundColor:"transparent",
+          borderWidth:2,
+          borderDash:[6,4],
+          pointRadius:0,
+          pointHoverRadius:0,
+          tension:0,
+          fill:false
+        }
+      ]
+    },
+    options:{
+      responsive:true,
+      interaction:{mode:"index",intersect:false},
+      plugins:{
+        legend:{
+          display:true,
+          position:"bottom",
+          labels:{
+            boxWidth:20,
+            font:{size:11},
+            padding:14,
+            generateLabels:(chart)=>{
+              const ds=chart.data.datasets;
+              return ds.map((d,i)=>({
+                text:d.label,
+                fillStyle:d.borderColor,
+                strokeStyle:d.borderColor,
+                lineWidth:2,
+                hidden:false,
+                datasetIndex:i,
+                lineDash:d.borderDash||[]
+              }));
+            }
+          }
+        },
+        tooltip:{
+          backgroundColor:"#fff",
+          borderColor:"#E2E8F0",
+          borderWidth:1,
+          titleColor:"#0F172A",
+          bodyColor:"#64748B",
+          callbacks:{label:(ctx)=>` ${ctx.dataset.label}: ${ctx.parsed.y!==null?ctx.parsed.y+"%":"sin dato"}`}
+        }
+      },
+      scales:{
+        x:{
+          grid:{display:false},
+          border:{display:false},
+          ticks:{font:{size:11},color:"#94A3B8"}
+        },
+        y:{
+          min:40,
+          max:100,
+          grid:{color:"#E2E8F0",drawBorder:false,lineWidth:1},
+          border:{display:false,dash:[3,3]},
+          ticks:{
+            font:{size:11},
+            color:"#94A3B8",
+            stepSize:10,
+            callback:v=>v+"%"
+          }
+        }
+      }
+    }
+  });
+}
+
+// ═══════════════ PDV ═══════════════
+function renderPDV(filter=""){
+  const data=PDV_DATA.filter(p=>p.nombre.toLowerCase().includes(filter.toLowerCase()));
+  return`
+  <div class="toolbar">
+    <div class="searchbar">${IC.search}<input id="pdv-search" placeholder="Buscar PDV por nombre..." oninput="filterPDV(this.value)" value="${filter}"></div>
+    <button class="btn btn-secondary btn-sm">${IC.filter} Filtros</button>
+    ${currentUser.role!=="mercaderista"?`<button class="btn btn-primary btn-sm" onclick="openNewPDVModal()">${IC.plus} Nuevo PDV</button>`:""}
+  </div>
+  <div class="pdv-grid">
+    ${data.map(pdv=>`
+      <div class="pdv-card">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px">
+          <div style="display:flex;gap:10px;align-items:flex-start">
+            <div style="width:40px;height:40px;border-radius:10px;background:rgba(14,165,233,.12);display:flex;align-items:center;justify-content:center;flex-shrink:0"><svg width="18" height="18" fill="none" stroke="#0EA5E9" stroke-width="2" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></div>
+            <div><div style="font-size:13px;font-weight:700;color:var(--navy)">${pdv.nombre}</div><div style="font-size:11px;color:var(--gray);margin-top:2px">${pdv.codigo} · ${pdv.tipo}</div></div>
+          </div>
+          ${badge(pdv.estado,pdv.estado==="Activo"?"success":"default")}
+        </div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px">
+          ${badge(pdv.pendiente?"Pendiente":"Al día",pdv.pendiente?"warning":"success")}
+          ${badge(pdv.distrito,"default")}
+          <span class="badge badge-info">${IC.listPuesto} ${pdv.puestos.length} puestos</span>
+        </div>
+        <div style="border-top:1px solid var(--border);padding-top:12px;display:flex;justify-content:space-between;align-items:center">
+          <div><div style="font-size:11px;color:var(--gray)">Mercaderista</div><div style="font-size:12px;font-weight:600;color:var(--navy)">${pdv.mercaderista}</div></div>
+          <div style="text-align:right"><div style="font-size:11px;color:var(--gray)">Visitas</div><div style="font-size:18px;font-weight:700;color:var(--primary)">${pdv.visitas}</div></div>
+        </div>
+        ${pdv.estado==="Activo"?`
+          <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);display:flex;gap:8px">
+            <button class="btn btn-primary btn-sm" style="flex:1;justify-content:center" onclick="openVisitModal(${pdv.id})">${IC.camera} Iniciar Visita</button>
+            <button class="btn btn-secondary btn-sm" style="flex:1;justify-content:center" onclick="openPuestosModal(${pdv.id})">${IC.listPuesto} Ver Puestos</button>
+          </div>`:`
+          <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border)">
+            <button class="btn btn-secondary btn-sm btn-full" onclick="openPuestosModal(${pdv.id})">${IC.listPuesto} Ver Nros. de Puestos</button>
+          </div>`}
+      </div>`).join("")}
+  </div>`;
+}
+function filterPDV(v){document.getElementById("content").innerHTML=renderPDV(v);document.getElementById("pdv-search").focus()}
+
+// ── Modal "Ver Puestos de Mercado" ──
+function openPuestosModal(pdvId){
+  const pdv=PDV_DATA.find(p=>p.id===pdvId);
+  openModal(`Puestos de Mercado — ${pdv.nombre}`,`
+    <div style="margin-bottom:16px;display:flex;justify-content:space-between;align-items:center">
+      <div>
+        <p style="font-size:13px;color:var(--gray);margin:0">${pdv.tipo} · ${pdv.distrito}</p>
+        <p style="font-size:12px;color:var(--gray);margin:4px 0 0">${pdv.puestos.length} puesto(s) registrados</p>
+      </div>
+      ${currentUser.role!=="mercaderista"?`<button class="btn btn-primary btn-sm" onclick="openAddPuestoModal(${pdvId})">${IC.plus} Agregar Puesto</button>`:""}
+    </div>
+    <div id="puestos-list">
+      ${pdv.puestos.map((p,i)=>`
+        <div class="puesto-row" style="cursor:default">
+          <div class="puesto-num">${p.num}</div>
+          <div style="flex:1">
+            <div style="font-size:13px;font-weight:600;color:var(--navy)">${p.nombre}</div>
+            <div style="font-size:11px;color:var(--gray)">Número de puesto: ${p.num}</div>
+          </div>
+          ${currentUser.role!=="mercaderista"?`
+            <button class="btn btn-ghost btn-sm" onclick="editPuesto(${pdvId},${i})" title="Editar">${IC.edit}</button>
+            <button class="btn btn-ghost btn-sm" onclick="deletePuesto(${pdvId},${i})" title="Eliminar" style="color:var(--danger)">${IC.trash}</button>
+          `:""}
+        </div>`).join("")}
+      ${pdv.puestos.length===0?`<div class="tbl-empty">No hay puestos registrados en este PDV</div>`:""}
+    </div>`,
+    "wide");
+}
+function openAddPuestoModal(pdvId){
+  const pdv=PDV_DATA.find(p=>p.id===pdvId);
+  openModal(`Agregar Puesto — ${pdv.nombre}`,`
+    <div class="field-row">
+      <div class="field"><label>Número de Puesto *</label><input id="np-num" placeholder="Ej: P-08"></div>
+      <div class="field"><label>Nombre del Puesto *</label><input id="np-nom" placeholder="Ej: Abarrotes Pérez"></div>
+    </div>
+    <div style="display:flex;gap:10px;justify-content:flex-end">
+      <button class="btn btn-secondary" onclick="openPuestosModal(${pdvId})">Cancelar</button>
+      <button class="btn btn-primary" onclick="savePuesto(${pdvId})">${IC.save} Guardar Puesto</button>
+    </div>`);
+}
+function savePuesto(pdvId){
+  const num=document.getElementById("np-num").value.trim();
+  const nom=document.getElementById("np-nom").value.trim();
+  if(!num||!nom){showNotif("Número y nombre son requeridos","error");return}
+  const pdv=PDV_DATA.find(p=>p.id===pdvId);
+  pdv.puestos.push({num,nombre:nom});
+  showNotif("Puesto agregado exitosamente");
+  openPuestosModal(pdvId);
+}
+function editPuesto(pdvId,idx){
+  const pdv=PDV_DATA.find(p=>p.id===pdvId);
+  const p=pdv.puestos[idx];
+  openModal(`Editar Puesto — ${pdv.nombre}`,`
+    <div class="field-row">
+      <div class="field"><label>Número de Puesto *</label><input id="ep-num" value="${p.num}"></div>
+      <div class="field"><label>Nombre del Puesto *</label><input id="ep-nom" value="${p.nombre}"></div>
+    </div>
+    <div style="display:flex;gap:10px;justify-content:flex-end">
+      <button class="btn btn-secondary" onclick="openPuestosModal(${pdvId})">Cancelar</button>
+      <button class="btn btn-primary" onclick="updatePuesto(${pdvId},${idx})">${IC.save} Guardar Cambios</button>
+    </div>`);
+}
+function updatePuesto(pdvId,idx){
+  const num=document.getElementById("ep-num").value.trim();
+  const nom=document.getElementById("ep-nom").value.trim();
+  if(!num||!nom){showNotif("Número y nombre son requeridos","error");return}
+  const pdv=PDV_DATA.find(p=>p.id===pdvId);
+  pdv.puestos[idx]={num,nombre:nom};
+  showNotif("Puesto actualizado");openPuestosModal(pdvId);
+}
+function deletePuesto(pdvId,idx){
+  const pdv=PDV_DATA.find(p=>p.id===pdvId);
+  pdv.puestos.splice(idx,1);
+  showNotif("Puesto eliminado");openPuestosModal(pdvId);
+}
+
+function openNewPDVModal(){
+  openModal("Crear Nuevo Punto de Venta",`
+    <div class="field"><label>Nombre del PDV *</label><input id="pdv-nom" placeholder="Ej: Mercado San Juan"></div>
+    <div class="field-row">
+      <div class="field"><label>Código *</label><input id="pdv-cod" placeholder="PDV-007"></div>
+      <div class="field"><label>Tipo</label><select id="pdv-tipo"><option>Mercado</option><option>Supermercado</option><option>Bodega</option></select></div>
+    </div>
+    <div class="field"><label>Distrito</label><input id="pdv-dis" placeholder="Ej: Jesús María"></div>
+    <div style="display:flex;gap:10px;justify-content:flex-end">
+      <button class="btn btn-secondary" onclick="closeModalDirect()">Cancelar</button>
+      <button class="btn btn-primary" onclick="savePDV()">${IC.save} Guardar PDV</button>
+    </div>`);
+}
+function savePDV(){
+  const nom=document.getElementById("pdv-nom").value.trim(),cod=document.getElementById("pdv-cod").value.trim(),tipo=document.getElementById("pdv-tipo").value,dis=document.getElementById("pdv-dis").value.trim();
+  if(!nom||!cod){showNotif("Nombre y código son requeridos","error");return}
+  PDV_DATA.push({id:Date.now(),nombre:nom,codigo:cod,distrito:dis||"—",tipo,estado:"Activo",mercaderista:"Sin asignar",visitas:0,pendiente:false,puestos:[]});
+  closeModalDirect();showNotif("PDV creado exitosamente");renderView("pdv");
+}
+
+function openVisitModal(pdvId){
+  const pdv=PDV_DATA.find(p=>p.id===pdvId);
+  openModal(`Iniciar Visita: ${pdv.nombre}`,`
+    <p style="font-size:13px;color:var(--gray);margin-bottom:20px">Selecciona el método de verificación de entrada al punto de venta.</p>
+    <button class="visit-opt highlighted" onclick="confirmVisit(${pdvId})">
+      <div style="color:var(--primary)">${IC.camera}</div>
+      <div><div style="font-size:14px;font-weight:600;color:var(--navy)">Iniciar con Fotografía</div><div style="font-size:12px;color:var(--gray)">Captura foto probatoria del punto de venta</div></div>
+    </button>
+    <button class="visit-opt" onclick="showNotif('Escáner QR activado');closeModalDirect()">
+      <div style="color:var(--gray)">${IC.qr}</div>
+      <div><div style="font-size:14px;font-weight:600;color:var(--navy)">Verificar con QR</div><div style="font-size:12px;color:var(--gray)">Escanea el código QR del local</div></div>
+    </button>`);
+}
+function confirmVisit(pdvId){
+  const pdv=PDV_DATA.find(p=>p.id===pdvId);
+  openModal("Confirmar inicio de visita",`
+    <div class="confirm-center">
+      <div class="confirm-icon" style="background:rgba(14,165,233,.12)"><div style="color:var(--primary);display:flex;align-items:center;justify-content:center">${IC.camera.replace('width="18" height="18"','width="28" height="28"')}</div></div>
+      <p style="font-size:14px;color:var(--navy);margin-bottom:8px">Se activará la cámara para capturar la foto probatoria.</p>
+      <p style="font-size:12px;color:var(--gray)">PDV: <strong>${pdv.nombre}</strong></p>
+    </div>
+    <div style="display:flex;gap:10px">
+      <button class="btn btn-secondary" style="flex:1;justify-content:center" onclick="closeModalDirect()">Cancelar</button>
+      <button class="btn btn-primary" style="flex:1;justify-content:center" onclick="startSCFromPDV(${pdvId})">${IC.camera} Continuar</button>
+    </div>`,"narrow");
+}
+function startSCFromPDV(pdvId){
+  const pdv=PDV_DATA.find(p=>p.id===pdvId);
+  scSelectedPDV=pdv;scStep=1;
+  scForm={pdv:pdv.nombre,puestoNum:"",puestoNombre:"",actividad:"",actividadId:null,observaciones:"",
+    productos:SKU_DATA.filter(s=>s.activo).map(s=>({...s,stockInicial:"",stockFinal:"",tieneActividad:false}))};
+  closeModalDirect();showNotif("Visita iniciada — fotografía capturada");navigate("storecheck");
+}
+
+// ═══════════════ STORECHECK — 5 PASOS ═══════════════
+// Paso 0: Selección PDV
+// Paso 1: Selección Puesto de Mercado  ← NUEVO
+// Paso 2: Selección Actividad Promocional ← NUEVO (separado)
+// Paso 3: Evidencia Fotográfica
+// Paso 4: Registro de SKUs / Stock
+// Paso 5: Confirmación  → total = pasos 0→4 (5 niveles en la barra)
+
+const SC_STEPS=["PDV","Puesto","Actividad","Foto","Stock","Confirmar"];
+
+function renderStorecheck(filter=""){
+  if(scStep>0)return renderSCForm();
+  const data=SC_DATA.filter(s=>s.pdv.toLowerCase().includes(filter.toLowerCase()));
+  const scC={Completado:"success","En Proceso":"warning",Pendiente:"default"};
+  return`
+  <div class="toolbar">
+    <div class="searchbar">${IC.search}<input id="sc-search" placeholder="Buscar storecheck..." oninput="filterSC(this.value)" value="${filter}"></div>
+    <button class="btn btn-secondary btn-sm">${IC.filter} Filtros</button>
+    <button class="btn btn-primary btn-sm" onclick="startNewSC()">${IC.plus} Nuevo Storecheck</button>
+  </div>
+  <div class="card card-0">
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Punto de Venta</th><th>Puesto</th><th>Fecha</th><th>Mercaderista</th><th>Actividad</th><th>SKUs</th><th>Foto</th><th>Estado</th><th>Obs.</th><th class="td-actions">Acciones</th></tr></thead>
+        <tbody>
+          ${data.map(sc=>`<tr>
+            <td class="td-bold">${sc.pdv}</td>
+            <td class="td-muted" style="font-size:12px">${sc.puesto||"—"}</td>
+            <td class="td-muted">${sc.fecha}</td>
+            <td class="td-muted">${sc.mercaderista}</td>
+            <td class="td-muted">${sc.actividad}</td>
+            <td>${badge(sc.skus+" SKUs","info")}</td>
+            <td>${sc.foto?`<svg width="15" height="15" fill="none" stroke="#10B981" stroke-width="2.5" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>`:`<svg width="15" height="15" fill="none" stroke="#EF4444" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>`}</td>
+            <td>${badge(sc.estado,scC[sc.estado])}</td>
+            <td class="td-muted" style="font-size:11px;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${sc.observaciones}">${sc.observaciones||"—"}</td>
+            <td class="td-actions"><div class="td-actions-inner">
+              <button class="btn btn-ghost btn-sm" onclick="showNotif('Detalle: ${sc.pdv}')">${IC.eye}</button>
+              <button class="btn btn-ghost btn-sm" onclick="showNotif('Editando: ${sc.pdv}')">${IC.edit}</button>
+            </div></td>
+          </tr>`).join("")}
+          ${data.length===0?`<tr><td colspan="10" class="tbl-empty">No hay storechecks registrados</td></tr>`:""}
+        </tbody>
+      </table>
+    </div>
+  </div>`;
+}
+function filterSC(v){document.getElementById("content").innerHTML=renderStorecheck(v);document.getElementById("sc-search").focus()}
+function startNewSC(){
+  scStep=0;scSelectedPDV=null;
+  scForm={pdv:"",puestoNum:"",puestoNombre:"",actividad:"",actividadId:null,observaciones:"",
+    productos:SKU_DATA.filter(s=>s.activo).map(s=>({...s,stockInicial:"",stockFinal:"",tieneActividad:false}))};
+  document.getElementById("content").innerHTML=renderSCForm();
+}
+
+function renderSCForm(){
+  const totalSteps=SC_STEPS.length; // 6 etiquetas para 5 pasos (0-5)
+  const stepsHTML=SC_STEPS.map((s,i)=>`
+    <div class="step-item">
+      <div class="step-col">
+        <div class="step-circle ${i<scStep?'done':i===scStep?'active':'pending'}">${i<scStep?IC.check:(i+1)}</div>
+        <div class="step-label ${i===scStep?'active':'other'}">${s}</div>
+      </div>
+      ${i<SC_STEPS.length-1?`<div class="step-line ${i<scStep?'done':'pending'}"></div>`:""}
+    </div>`).join("");
+  return`
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:24px">
+      <button class="btn btn-ghost btn-sm" onclick="cancelSC()">${IC.back} Volver</button>
+      <h3 style="font-size:15px;font-weight:700;color:var(--navy)">Nuevo Storecheck — Paso ${scStep+1} de ${SC_STEPS.length}</h3>
+    </div>
+    <div class="steps-bar">${stepsHTML}</div>
+    <div class="card" style="max-width:720px;margin:0 auto">${renderSCStepContent()}</div>`;
+}
+
+function renderSCStepContent(){
+  // PASO 0: Selección PDV + Observaciones
+  if(scStep===0) return`
+    <h4 style="margin:0 0 16px;color:var(--navy)">Paso 1 — Selección de Punto de Venta</h4>
+    <div class="field"><label>Punto de Venta *</label>
+      <select id="sc-pdv">
+        <option value="">-- Seleccionar PDV --</option>
+        ${PDV_DATA.filter(p=>p.estado==="Activo").map(p=>`<option value="${p.id}" ${scForm.pdv==p.nombre?"selected":""}>${p.nombre} — ${p.distrito} (${p.puestos.length} puestos)</option>`).join("")}
+      </select>
+    </div>
+    <div class="field"><label>Observaciones generales <span style="font-size:11px;color:var(--gray)">(incidencias, puesto cerrado, etc.)</span></label>
+      <textarea id="sc-obs" rows="2" placeholder="Ej: Tráfico alto, acceso demorado...">${scForm.observaciones}</textarea>
+    </div>
+    <button class="btn btn-primary" onclick="scStep0Next()">Continuar ${IC.chevR}</button>`;
+
+  // PASO 1: Selección de Puesto de Mercado
+  if(scStep===1){
+    const pdv=PDV_DATA.find(p=>p.nombre===scForm.pdv);
+    return`
+    <h4 style="margin:0 0 6px;color:var(--navy)">Paso 2 — Seleccionar Puesto de Mercado</h4>
+    <p style="font-size:13px;color:var(--gray);margin:0 0 16px">PDV: <strong>${scForm.pdv}</strong> · Selecciona el puesto específico que visitarás.</p>
+    ${pdv&&pdv.puestos.length>0?`
+      <div style="max-height:280px;overflow-y:auto;margin-bottom:20px">
+        ${pdv.puestos.map(p=>`
+          <div class="puesto-row ${scForm.puestoNum===p.num?'selected':''}" onclick="selectPuesto('${p.num}','${p.nombre.replace(/'/g,"\\'")}')">
+            <div class="puesto-num">${p.num}</div>
+            <div style="flex:1">
+              <div style="font-size:14px;font-weight:600;color:var(--navy)">${p.nombre}</div>
+              <div style="font-size:11px;color:var(--gray)">Número de puesto: ${p.num}</div>
+            </div>
+            ${scForm.puestoNum===p.num?`<div style="color:var(--primary)">${IC.checkCircle}</div>`:""}
+          </div>`).join("")}
+      </div>
+      ${scForm.puestoNum?`<div class="alert-info" style="margin-bottom:12px">${IC.check} Puesto seleccionado: <strong>${scForm.puestoNum} — ${scForm.puestoNombre}</strong></div>`:""}
+    `:`<div class="alert-warn" style="margin-bottom:16px">${IC.alert} Este PDV no tiene puestos registrados. Puedes continuar sin seleccionar uno.</div>`}
+    <div style="display:flex;gap:10px">
+      <button class="btn btn-secondary" onclick="scStep--;document.getElementById('content').innerHTML=renderSCForm()">Atrás</button>
+      <button class="btn btn-primary" onclick="scStep++;document.getElementById('content').innerHTML=renderSCForm()">Continuar ${IC.chevR}</button>
+    </div>`;
+  }
+
+  // PASO 2: Selección de Actividad Promocional (solo Vigentes)
+  if(scStep===2){
+    const actVigentes=ACTIVIDADES.filter(a=>a.estado==="Vigente");
+    return`
+    <h4 style="margin:0 0 6px;color:var(--navy)">Paso 3 — Actividad Promocional</h4>
+    <p style="font-size:13px;color:var(--gray);margin:0 0 16px">Selecciona la actividad vigente que corresponde a esta visita. Solo se muestran actividades <strong>Vigentes</strong>.</p>
+    <div style="max-height:300px;overflow-y:auto;margin-bottom:16px">
+      ${actVigentes.map(a=>{
+        const skuNames=a.skuIds.map(id=>SKU_DATA.find(s=>s.id===id)?.nombre).filter(Boolean).join(", ");
+        return`
+        <div class="puesto-row ${scForm.actividadId===a.id?'selected':''}" onclick="selectActividad(${a.id},'${a.nombre.replace(/'/g,"\\'")}')">
+          <div style="width:40px;height:40px;border-radius:8px;background:rgba(245,158,11,.12);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+            <svg width="16" height="16" fill="none" stroke="#F59E0B" stroke-width="2" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          </div>
+          <div style="flex:1">
+            <div style="font-size:13px;font-weight:700;color:var(--navy)">${a.nombre}</div>
+            <div style="font-size:11px;color:var(--gray);margin-top:2px">${a.tipo} · Hasta ${a.fin}</div>
+            ${skuNames?`<div style="font-size:11px;color:var(--purple);margin-top:3px">SKUs: ${skuNames}</div>`:""}
+          </div>
+          ${badge("Vigente","success")}
+          ${scForm.actividadId===a.id?`<div style="color:var(--primary)">${IC.checkCircle}</div>`:""}
+        </div>`}).join("")}
+      ${actVigentes.length===0?`<div class="tbl-empty">No hay actividades vigentes configuradas</div>`:""}
+    </div>
+    ${scForm.actividad?`<div class="alert-info" style="margin-bottom:12px">${IC.check} Actividad: <strong>${scForm.actividad}</strong></div>`:`<div class="alert-warn" style="margin-bottom:12px">${IC.alert} Puedes continuar sin seleccionar actividad.</div>`}
+    <div style="display:flex;gap:10px">
+      <button class="btn btn-secondary" onclick="scStep--;document.getElementById('content').innerHTML=renderSCForm()">Atrás</button>
+      <button class="btn btn-primary" onclick="scStep++;document.getElementById('content').innerHTML=renderSCForm()">Continuar ${IC.chevR}</button>
+    </div>`;
+  }
+
+  // PASO 3: Foto probatoria
+  if(scStep===3) return`
+    <h4 style="margin:0 0 8px;color:var(--navy)">Paso 4 — Evidencia Fotográfica</h4>
+    <p style="font-size:13px;color:var(--gray);margin:0 0 20px">Captura una foto probatoria del puesto de mercado antes de registrar el stock.</p>
+    <div class="photo-drop" onclick="showNotif('Cámara activada — foto capturada y georreferenciada')">
+      <div style="color:var(--gray);display:flex;justify-content:center">${IC.camera.replace('width="18" height="18"','width="40" height="40"')}</div>
+      <div style="font-size:14px;font-weight:600;color:var(--navy);margin-top:12px">Tomar fotografía del puesto</div>
+      <div style="font-size:12px;color:var(--gray);margin-top:4px">Haz clic para activar la cámara del dispositivo</div>
+      ${scForm.puestoNombre?`<div style="margin-top:8px;font-size:12px;color:var(--primary);font-weight:600">Puesto: ${scForm.puestoNum} — ${scForm.puestoNombre}</div>`:""}
+    </div>
+    <div style="display:flex;gap:10px">
+      <button class="btn btn-secondary" onclick="scStep--;document.getElementById('content').innerHTML=renderSCForm()">Atrás</button>
+      <button class="btn btn-primary" onclick="scStep++;document.getElementById('content').innerHTML=renderSCForm()">Confirmar y continuar ${IC.chevR}</button>
+    </div>`;
+
+  // PASO 4: Registro de SKUs / Stock
+  if(scStep===4) return`
+    <h4 style="margin:0 0 6px;color:var(--navy)">Paso 5 — Registro de Stock por SKU</h4>
+    <p style="font-size:13px;color:var(--gray);margin:0 0 6px">Ingresa stock inicial, stock final y marca si hay actividad promocional activa por producto.</p>
+    <div class="alert-warn" style="margin-bottom:14px">${IC.alert} <span>Los campos Stock Inicial y Stock Final son obligatorios para enviar.</span></div>
+    <div class="tbl-wrap">
+      <table class="sc-table">
+        <thead><tr><th>Producto</th><th>Cód.</th><th>Stock Inicial *</th><th>Stock Final *</th><th>¿Actividad?</th></tr></thead>
+        <tbody>
+          ${scForm.productos.map((p,i)=>`<tr>
+            <td class="td-bold" style="font-size:12px">${p.nombre}</td>
+            <td><span class="code-tag">${p.codigo}</span></td>
+            <td><input type="number" min="0" placeholder="0" value="${p.stockInicial}" onchange="scForm.productos[${i}].stockInicial=this.value"></td>
+            <td><input type="number" min="0" placeholder="0" value="${p.stockFinal}" onchange="scForm.productos[${i}].stockFinal=this.value"></td>
+            <td style="text-align:center">
+              <label class="switch"><input type="checkbox" ${p.tieneActividad?"checked":""} onchange="scForm.productos[${i}].tieneActividad=this.checked"><span class="slider"></span></label>
+            </td>
+          </tr>`).join("")}
+        </tbody>
+      </table>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:20px">
+      <button class="btn btn-secondary" onclick="scStep--;document.getElementById('content').innerHTML=renderSCForm()">Atrás</button>
+      <button class="btn btn-primary" onclick="scValidateStock()">Guardar y continuar ${IC.chevR}</button>
+    </div>`;
+
+  // PASO 5: Confirmación
+  if(scStep===5) return`
+    <div class="confirm-center">
+      <div class="confirm-icon" style="background:rgba(16,185,129,.12)">
+        <svg width="32" height="32" fill="none" stroke="#10B981" stroke-width="2" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+      </div>
+      <h4 style="margin:0 0 6px;color:var(--navy)">Storecheck listo para enviar</h4>
+      <p style="font-size:13px;color:var(--gray)">${scForm.productos.length} SKUs registrados</p>
+    </div>
+    <div style="background:var(--bg);border-radius:10px;padding:12px 16px;margin-bottom:20px">
+      ${[
+        ["PDV",scForm.pdv||"—"],
+        ["Puesto",scForm.puestoNum?(scForm.puestoNum+" — "+scForm.puestoNombre):"No seleccionado"],
+        ["Actividad",scForm.actividad||"No especificada"],
+        ["Mercaderista",currentUser.name],
+        ["Fecha",todayISO()],
+        ["SKUs registrados",scForm.productos.length],
+        ["Observaciones",scForm.observaciones||"Ninguna"],
+      ].map(([k,v])=>`<div class="summary-row"><span class="summary-key">${k}</span><span class="summary-val">${v}</span></div>`).join("")}
+    </div>
+    <div style="display:flex;gap:10px">
+      <button class="btn btn-secondary" onclick="scStep--;document.getElementById('content').innerHTML=renderSCForm()">Atrás</button>
+      <button class="btn btn-success" style="flex:1;justify-content:center" onclick="completeSC()">${IC.checkCircle} Confirmar y Enviar</button>
+    </div>`;
+  return"";
+}
+
+function selectPuesto(num,nombre){scForm.puestoNum=num;scForm.puestoNombre=nombre;document.getElementById("content").innerHTML=renderSCForm()}
+function selectActividad(id,nombre){scForm.actividadId=id;scForm.actividad=nombre;document.getElementById("content").innerHTML=renderSCForm()}
+
+function scStep0Next(){
+  const pdvSel=document.getElementById("sc-pdv");
+  const obs=document.getElementById("sc-obs");
+  if(!pdvSel||!pdvSel.value){showNotif("Debes seleccionar un PDV","error");return}
+  const pdv=PDV_DATA.find(p=>p.id==pdvSel.value);
+  scForm.pdv=pdv.nombre;
+  scForm.observaciones=obs?obs.value:"";
+  scStep++;document.getElementById("content").innerHTML=renderSCForm();
+}
+function scValidateStock(){
+  const invalidos=scForm.productos.filter(p=>p.stockInicial===""||p.stockFinal==="");
+  if(invalidos.length){showNotif(`${invalidos.length} producto(s) con stock vacío — completa todos los campos obligatorios`,"error");return}
+  scStep++;document.getElementById("content").innerHTML=renderSCForm();
+}
+function cancelSC(){scStep=0;scSelectedPDV=null;renderView("storecheck")}
+function completeSC(){
+  SC_DATA.unshift({id:Date.now(),pdv:scForm.pdv,puesto:scForm.puestoNum?(scForm.puestoNum+" — "+scForm.puestoNombre):"",
+    fecha:todayISO(),mercaderista:currentUser.name,estado:"Completado",skus:scForm.productos.length,foto:true,
+    actividad:scForm.actividad||"General",observaciones:scForm.observaciones});
+  scStep=0;scSelectedPDV=null;showNotif("Storecheck completado y guardado exitosamente");renderView("storecheck");
+}
+
+// ═══════════════ SKUs ═══════════════
+function renderSKUs(filter=""){
+  const data=SKU_DATA.filter(s=>s.nombre.toLowerCase().includes(filter.toLowerCase()));
+  return`
+  <div class="toolbar">
+    <div class="searchbar">${IC.search}<input id="sku-search" placeholder="Buscar SKU..." oninput="filterSKU(this.value)" value="${filter}"></div>
+    <button class="btn btn-secondary btn-sm" onclick="showNotif('Importando SKUs desde Excel...')">${IC.upload} Carga Masiva Excel</button>
+    <button class="btn btn-primary btn-sm" onclick="openNewSKUModal()">${IC.plus} Nuevo SKU</button>
+  </div>
+  <div class="card card-0">
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Código</th><th>Producto</th><th>Marca</th><th>Categoría</th><th>Estado</th><th>Activar / Desactivar</th><th class="td-actions">Acciones</th></tr></thead>
+        <tbody>
+          ${data.map(s=>`<tr style="opacity:${s.activo?1:.6}">
+            <td><span class="code-tag">${s.codigo}</span></td>
+            <td class="td-bold">${s.nombre}</td>
+            <td class="td-muted">${s.marca}</td>
+            <td>${badge(s.categoria,"info")}</td>
+            <td>${badge(s.activo?"Activo":"Inactivo",s.activo?"success":"default")}</td>
+            <td><div style="display:flex;align-items:center;gap:8px">
+              <label class="switch"><input type="checkbox" ${s.activo?"checked":""} onchange="toggleSKU(${s.id},this.checked)"><span class="slider"></span></label>
+              <span style="font-size:12px;color:var(--gray)">${s.activo?"Activo":"Inactivo"}</span>
+            </div></td>
+            <td class="td-actions"><div class="td-actions-inner">
+              <button class="btn btn-ghost btn-sm" onclick="showNotif('Editando: ${s.nombre}')">${IC.edit}</button>
+            </div></td>
+          </tr>`).join("")}
+          ${data.length===0?`<tr><td colspan="7" class="tbl-empty">No se encontraron SKUs</td></tr>`:""}
+        </tbody>
+      </table>
+    </div>
+  </div>`;
+}
+function filterSKU(v){document.getElementById("content").innerHTML=renderSKUs(v);document.getElementById("sku-search").focus()}
+function toggleSKU(id,active){const s=SKU_DATA.find(x=>x.id===id);if(s){s.activo=active;showNotif(`SKU ${active?"activado":"desactivado"}`);renderView("skus")}}
+function openNewSKUModal(){
+  openModal("Registrar Nuevo SKU",`
+    <div class="field-row">
+      <div class="field"><label>Código SKU *</label><input id="s-cod" placeholder="SKU-007"></div>
+      <div class="field"><label>Marca</label><input id="s-mca" placeholder="Ej: Coca-Cola"></div>
+    </div>
+    <div class="field"><label>Nombre del producto *</label><input id="s-nom" placeholder="Ej: Inca Kola 1L"></div>
+    <div class="field"><label>Categoría *</label>
+      <select id="s-cat"><option>Bebidas</option><option>Lácteos</option><option>Snacks</option><option>Confitería</option><option>Cafés</option><option>Limpieza</option></select>
+    </div>
+    <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:8px">
+      <button class="btn btn-secondary" onclick="closeModalDirect()">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveSKU()">${IC.save} Guardar SKU</button>
+    </div>`);
+}
+function saveSKU(){
+  const cod=document.getElementById("s-cod").value.trim();const nom=document.getElementById("s-nom").value.trim();const mca=document.getElementById("s-mca").value.trim();const cat=document.getElementById("s-cat").value;
+  if(!cod||!nom){showNotif("Código y nombre son requeridos","error");return}
+  SKU_DATA.push({id:Date.now(),codigo:cod,nombre:nom,marca:mca||"—",categoria:cat,activo:true});
+  closeModalDirect();showNotif("SKU creado exitosamente");renderView("skus");
+}
+
+// ═══════════════ ACTIVIDADES — GESTIÓN COMPLETA ═══════════════
+function renderActividades(){
+  const vigentes=ACTIVIDADES.filter(a=>a.estado==="Vigente");
+  const caducadas=ACTIVIDADES.filter(a=>a.estado==="Caducada");
+  function actCard(a){
+    const skuNames=a.skuIds.map(id=>SKU_DATA.find(s=>s.id===id)?.nombre).filter(Boolean);
+    return`
+    <div class="act-card" style="border-left:4px solid ${a.estado==="Vigente"?"var(--success)":"var(--danger)"}">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">
+        <div style="display:flex;gap:10px;align-items:flex-start;flex:1;min-width:0">
+          <div style="width:38px;height:38px;border-radius:9px;background:${a.estado==="Vigente"?"rgba(16,185,129,.12)":"rgba(239,68,68,.1)"};display:flex;align-items:center;justify-content:center;flex-shrink:0">
+            <svg width="16" height="16" fill="none" stroke="${a.estado==="Vigente"?"var(--success)":"var(--danger)"}" stroke-width="2" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          </div>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:13px;font-weight:700;color:var(--navy);margin-bottom:2px">${a.nombre}</div>
+            <div style="font-size:11px;color:var(--gray)">${a.tipo} · ${a.descripcion||""}</div>
+          </div>
+        </div>
+        ${badge(a.estado,a.estado==="Vigente"?"success":"danger")}
+      </div>
+      <div style="display:flex;gap:12px;font-size:12px;color:var(--gray);margin-bottom:10px">
+        <span>Inicio: <strong style="color:var(--navy)">${a.inicio}</strong></span>
+        <span>Fin: <strong style="color:var(--navy)">${a.fin}</strong></span>
+      </div>
+      <!-- SKUs asociados -->
+      ${skuNames.length?`<div style="margin-bottom:12px"><div style="font-size:10px;color:var(--gray);font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">SKUs asociados</div><div>${skuNames.map(n=>`<span class="act-sku-pill">${n}</span>`).join("")}</div></div>`:""}
+      <!-- Acciones -->
+      <div style="border-top:1px solid var(--border);padding-top:10px;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">
+        <div style="display:flex;align-items:center;gap:8px">
+          <label class="switch"><input type="checkbox" ${a.estado==="Vigente"?"checked":""} onchange="toggleActividad(${a.id},this.checked)"><span class="slider"></span></label>
+          <span style="font-size:12px;color:var(--gray)">Vigente</span>
+        </div>
+        <div style="display:flex;gap:6px">
+          <button class="btn btn-secondary btn-sm" onclick="openEditActModal(${a.id})">${IC.edit} Editar</button>
+          <button class="btn btn-ghost btn-sm" style="color:var(--danger)" onclick="confirmDeleteAct(${a.id})">${IC.trash}</button>
+        </div>
+      </div>
+    </div>`;
+  }
+  return`
+  <div class="toolbar" style="justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
+    <div>
+      <span style="font-size:13px;color:var(--gray)">Los mercaderistas solo ven actividades <strong>Vigentes</strong> en su formulario de campo.</span>
+    </div>
+    <button class="btn btn-primary btn-sm" onclick="openNewActModal()">${IC.plus} Nueva Actividad</button>
+  </div>
+  ${vigentes.length>0?`
+    <div style="font-size:12px;font-weight:700;color:var(--success);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">● Vigentes (${vigentes.length})</div>
+    <div class="act-grid" style="margin-bottom:24px">${vigentes.map(actCard).join("")}</div>`:""}
+  ${caducadas.length>0?`
+    <div style="font-size:12px;font-weight:700;color:var(--danger);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">● Caducadas / Inactivas (${caducadas.length})</div>
+    <div class="act-grid">${caducadas.map(actCard).join("")}</div>`:""}
+  ${ACTIVIDADES.length===0?`<div class="card" style="text-align:center;padding:48px;color:var(--gray)">No hay actividades registradas. Crea la primera.</div>`:""}`;
+}
+
+function toggleActividad(id,active){
+  const a=ACTIVIDADES.find(x=>x.id===id);
+  if(a){a.estado=active?"Vigente":"Caducada";showNotif(`Actividad ${active?"activada — ahora Vigente":"desactivada — marcada como Caducada"}`);renderView("actividades")}
+}
+
+function openNewActModal(){
+  openModal("Nueva Actividad Promocional",`
+    <div class="field"><label>Nombre de la actividad *</label><input id="act-nom" placeholder="Ej: Campaña Junio 2026"></div>
+    <div class="field-row">
+      <div class="field"><label>Tipo *</label>
+        <select id="act-tipo"><option value="Descuento">Descuento</option><option value="Exhibición">Exhibición</option><option value="Mixta">Mixta</option></select>
+      </div>
+      <div class="field"><label>Estado inicial</label>
+        <select id="act-est"><option value="Vigente">Vigente</option><option value="Caducada">Caducada</option></select>
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field"><label>Fecha inicio *</label><input id="act-ini" type="date"></div>
+      <div class="field"><label>Fecha fin *</label><input id="act-fin" type="date"></div>
+    </div>
+    <div class="field"><label>Descripción</label><input id="act-desc" placeholder="Ej: Descuento 15% en bebidas seleccionadas"></div>
+    <div class="field">
+      <label>SKUs participantes <span style="font-size:11px;color:var(--gray)">(selecciona uno o varios)</span></label>
+      <div class="multi-select-box" id="new-act-skus">
+        ${SKU_DATA.map(s=>`<label class="multi-select-item"><input type="checkbox" value="${s.id}"> ${s.nombre} ${badge(s.categoria,"info")}</label>`).join("")}
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:8px">
+      <button class="btn btn-secondary" onclick="closeModalDirect()">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveActividad()">${IC.save} Crear Actividad</button>
+    </div>`,"wide");
+}
+function saveActividad(){
+  const nom=document.getElementById("act-nom").value.trim();
+  const ini=document.getElementById("act-ini").value;
+  const fin=document.getElementById("act-fin").value;
+  if(!nom||!ini||!fin){showNotif("Nombre y fechas son obligatorios","error");return}
+  const tipo=document.getElementById("act-tipo").value;
+  const est=document.getElementById("act-est").value;
+  const desc=document.getElementById("act-desc").value.trim();
+  const skuIds=[...document.querySelectorAll("#new-act-skus input:checked")].map(cb=>parseInt(cb.value));
+  ACTIVIDADES.push({id:Date.now(),nombre:nom,tipo,estado:est,inicio:ini,fin,descripcion:desc,skuIds});
+  closeModalDirect();showNotif("Actividad creada exitosamente");renderView("actividades");
+}
+
+function openEditActModal(id){
+  const a=ACTIVIDADES.find(x=>x.id===id);
+  openModal(`Editar Actividad`,`
+    <div class="field"><label>Nombre *</label><input id="ea-nom" value="${a.nombre}"></div>
+    <div class="field-row">
+      <div class="field"><label>Tipo</label>
+        <select id="ea-tipo">
+          ${["Descuento","Exhibición","Mixta"].map(t=>`<option ${a.tipo===t?"selected":""}>${t}</option>`).join("")}
+        </select>
+      </div>
+      <div class="field"><label>Estado</label>
+        <select id="ea-est">
+          <option value="Vigente" ${a.estado==="Vigente"?"selected":""}>Vigente</option>
+          <option value="Caducada" ${a.estado==="Caducada"?"selected":""}>Caducada</option>
+        </select>
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field"><label>Fecha inicio</label><input id="ea-ini" type="date" value="${a.inicio}"></div>
+      <div class="field"><label>Fecha fin</label><input id="ea-fin" type="date" value="${a.fin}"></div>
+    </div>
+    <div class="field"><label>Descripción</label><input id="ea-desc" value="${a.descripcion||""}"></div>
+    <div class="field">
+      <label>SKUs participantes</label>
+      <div class="multi-select-box" id="ea-skus">
+        ${SKU_DATA.map(s=>`<label class="multi-select-item"><input type="checkbox" value="${s.id}" ${a.skuIds.includes(s.id)?"checked":""}> ${s.nombre} ${badge(s.categoria,"info")}</label>`).join("")}
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:8px">
+      <button class="btn btn-secondary" onclick="closeModalDirect()">Cancelar</button>
+      <button class="btn btn-primary" onclick="updateActividad(${id})">${IC.save} Guardar Cambios</button>
+    </div>`,"wide");
+}
+function updateActividad(id){
+  const a=ACTIVIDADES.find(x=>x.id===id);
+  const nom=document.getElementById("ea-nom").value.trim();const ini=document.getElementById("ea-ini").value;const fin=document.getElementById("ea-fin").value;
+  if(!nom||!ini||!fin){showNotif("Nombre y fechas son obligatorios","error");return}
+  a.nombre=nom;a.tipo=document.getElementById("ea-tipo").value;a.estado=document.getElementById("ea-est").value;
+  a.inicio=ini;a.fin=fin;a.descripcion=document.getElementById("ea-desc").value.trim();
+  a.skuIds=[...document.querySelectorAll("#ea-skus input:checked")].map(cb=>parseInt(cb.value));
+  closeModalDirect();showNotif("Actividad actualizada correctamente");renderView("actividades");
+}
+function confirmDeleteAct(id){
+  const a=ACTIVIDADES.find(x=>x.id===id);
+  openModal("Eliminar Actividad",`
+    <div class="confirm-center" style="padding:8px 0 16px">
+      <div class="confirm-icon" style="background:rgba(239,68,68,.1)"><svg width="28" height="28" fill="none" stroke="var(--danger)" stroke-width="2" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg></div>
+      <p style="font-size:14px;color:var(--navy);margin-bottom:6px">¿Eliminar la actividad?</p>
+      <p style="font-size:13px;color:var(--gray)"><strong>${a.nombre}</strong></p>
+      <p style="font-size:12px;color:var(--danger);margin-top:8px">Esta acción no se puede deshacer.</p>
+    </div>
+    <div style="display:flex;gap:10px">
+      <button class="btn btn-secondary" style="flex:1;justify-content:center" onclick="closeModalDirect()">Cancelar</button>
+      <button class="btn btn-danger" style="flex:1;justify-content:center" onclick="deleteActividad(${id})">${IC.trash} Eliminar</button>
+    </div>`,"narrow");
+}
+function deleteActividad(id){
+  const idx=ACTIVIDADES.findIndex(x=>x.id===id);
+  if(idx>-1)ACTIVIDADES.splice(idx,1);
+  closeModalDirect();showNotif("Actividad eliminada");renderView("actividades");
+}
+
+// ═══════════════ REPORTES ═══════════════
+// ── Estado de filtros de reporte
+let repFiltros={storecheck:"",controller:"",supervisor:"",gestor:"",fechaIni:"",fechaFin:""};
+let repFiltrosAplicados={storecheck:"",controller:"",supervisor:"",gestor:"",fechaIni:"",fechaFin:""};
+
+function renderReportes(){
+  const scC={Completado:"success","En Proceso":"warning",Pendiente:"default"};
+  // Aplicar filtros activos a los datos de la tabla
+  let dataFiltrada=SC_DATA.filter(sc=>{
+    const f=repFiltrosAplicados;
+    if(f.storecheck && sc.actividad!==f.storecheck) return false;
+    if(f.controller && sc.mercaderista!==f.controller) return false;
+    if(f.supervisor && sc.mercaderista!==f.supervisor) return false;
+    if(f.gestor && sc.mercaderista!==f.gestor) return false;
+    if(f.fechaIni && sc.fecha < f.fechaIni) return false;
+    if(f.fechaFin && sc.fecha > f.fechaFin) return false;
+    return true;
+  });
+  const hayFiltros=Object.values(repFiltrosAplicados).some(v=>v!=="");
+  const hoy=new Date().toISOString().split("T")[0];
+  return`
+  <!-- TOOLBAR -->
+  <div class="toolbar">
+    <div class="searchbar">${IC.search}<input id="rep-search" placeholder="Buscar reporte..." oninput="filterRepTable(this.value)"></div>
+    <button class="btn ${filterPanelOpen?'btn-primary':'btn-secondary'} btn-sm" onclick="toggleFilterPanel()" id="btn-filtro">
+      <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="11" y1="18" x2="13" y2="18"/></svg>
+      Filtro${hayFiltros?" <span style='background:#fff;color:var(--purple);border-radius:99px;padding:0 5px;font-size:10px;font-weight:700;margin-left:2px'>●</span>":""}
+    </button>
+    <button class="btn btn-secondary btn-sm" onclick="showExportModal()">${IC.download} Generar Excel</button>
+    <button class="btn btn-secondary btn-sm" onclick="showNotif('Importando desde Excel...')">${IC.upload} Importar Excel</button>
+  </div>
+
+  <!-- PANEL DE FILTRO DESPLEGABLE — diseño del prototipo -->
+  <div id="filter-panel" style="display:${filterPanelOpen?'block':'none'};margin-bottom:20px;animation:fadeDown .2s ease">
+    <div style="background:var(--white);border:1px solid var(--border);border-radius:12px;box-shadow:0 4px 20px rgba(0,0,0,.08);overflow:hidden">
+      <!-- Cabecera del panel -->
+      <div style="display:flex;align-items:center;gap:10px;padding:16px 24px;border-bottom:1px solid var(--border)">
+        <svg width="18" height="18" fill="none" stroke="var(--gray)" stroke-width="2" viewBox="0 0 24 24"><line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="11" y1="18" x2="13" y2="18"/></svg>
+        <span style="font-size:14px;font-weight:600;color:var(--navy)">Filtro</span>
+      </div>
+      <!-- Cuerpo del panel -->
+      <div style="padding:20px 24px">
+        <!-- Fila 1: STORECHECK · Controller · Supervisor -->
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:12px">
+          <!-- STORECHECK -->
+          <div class="fp-select-wrap">
+            <label class="fp-label">STORECHECK</label>
+            <select id="fp-sc" class="fp-select" onchange="repFiltros.storecheck=this.value">
+              <option value="">Todos</option>
+              ${[...new Set(SC_DATA.map(s=>s.actividad))].map(a=>`<option value="${a}" ${repFiltros.storecheck===a?"selected":""}>${a}</option>`).join("")}
+            </select>
+            <span class="fp-arrow">▾</span>
+          </div>
+          <!-- Controller = Analista/Validador -->
+          <div class="fp-select-wrap">
+            <label class="fp-label">Controller</label>
+            <select id="fp-ctrl" class="fp-select" onchange="repFiltros.controller=this.value">
+              <option value="">Todos</option>
+              ${USERS.filter(u=>u.role==="analista"||u.role==="admin").map(u=>`<option value="${u.name}" ${repFiltros.controller===u.name?"selected":""}>${u.name}</option>`).join("")}
+            </select>
+            <span class="fp-arrow">▾</span>
+          </div>
+          <!-- Supervisor -->
+          <div class="fp-select-wrap">
+            <label class="fp-label">Supervisor</label>
+            <select id="fp-sup" class="fp-select" onchange="repFiltros.supervisor=this.value">
+              <option value="">Todos</option>
+              ${USERS.filter(u=>u.role==="admin").map(u=>`<option value="${u.name}" ${repFiltros.supervisor===u.name?"selected":""}>${u.name}</option>`).join("")}
+            </select>
+            <span class="fp-arrow">▾</span>
+          </div>
+        </div>
+        <!-- Fila 2: Gestor · Fecha de Inicio · Fecha de Fin -->
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:20px">
+          <!-- Gestor = Mercaderista -->
+          <div class="fp-select-wrap">
+            <label class="fp-label">Gestor</label>
+            <select id="fp-gest" class="fp-select" onchange="repFiltros.gestor=this.value">
+              <option value="">Todos</option>
+              ${USERS.filter(u=>u.role==="mercaderista").map(u=>`<option value="${u.name}" ${repFiltros.gestor===u.name?"selected":""}>${u.name}</option>`).join("")}
+            </select>
+            <span class="fp-arrow">▾</span>
+          </div>
+          <!-- Fecha de Inicio -->
+          <div class="fp-date-wrap">
+            <label class="fp-date-label">Fecha de Inicio *</label>
+            <input id="fp-fi" type="date" class="fp-date-input" value="${repFiltros.fechaIni||hoy}" onchange="repFiltros.fechaIni=this.value">
+            <span class="fp-cal-icon">
+              <svg width="16" height="16" fill="none" stroke="var(--gray)" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            </span>
+          </div>
+          <!-- Fecha de Fin -->
+          <div class="fp-date-wrap">
+            <label class="fp-date-label">Fecha de Fin *</label>
+            <input id="fp-ff" type="date" class="fp-date-input" value="${repFiltros.fechaFin||hoy}" onchange="repFiltros.fechaFin=this.value">
+            <span class="fp-cal-icon">
+              <svg width="16" height="16" fill="none" stroke="var(--gray)" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            </span>
+          </div>
+        </div>
+        <!-- Botones -->
+        <div style="display:flex;justify-content:flex-end;gap:12px;padding-top:16px;border-top:1px solid var(--border)">
+          <button class="btn btn-secondary" style="min-width:100px;justify-content:center" onclick="cerrarFiltro()">Cerrar</button>
+          <button class="btn" style="min-width:100px;justify-content:center;background:var(--purple);color:#fff" onclick="aplicarFiltro()">Filtrar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- BADGE de filtros activos -->
+  ${hayFiltros?`
+  <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;flex-wrap:wrap">
+    <span style="font-size:12px;color:var(--gray);font-weight:600">Filtros activos:</span>
+    ${repFiltrosAplicados.storecheck?`<span class="badge badge-purple">SC: ${repFiltrosAplicados.storecheck}</span>`:""}
+    ${repFiltrosAplicados.controller?`<span class="badge badge-info">Controller: ${repFiltrosAplicados.controller}</span>`:""}
+    ${repFiltrosAplicados.supervisor?`<span class="badge badge-purple">Supervisor: ${repFiltrosAplicados.supervisor}</span>`:""}
+    ${repFiltrosAplicados.gestor?`<span class="badge badge-success">Gestor: ${repFiltrosAplicados.gestor}</span>`:""}
+    ${repFiltrosAplicados.fechaIni?`<span class="badge badge-default">Desde: ${repFiltrosAplicados.fechaIni}</span>`:""}
+    ${repFiltrosAplicados.fechaFin?`<span class="badge badge-default">Hasta: ${repFiltrosAplicados.fechaFin}</span>`:""}
+    <button onclick="limpiarFiltros()" style="font-size:11px;color:var(--danger);background:none;border:none;cursor:pointer;font-weight:600;text-decoration:underline">✕ Limpiar todo</button>
+  </div>`:""}
+
+  <!-- TIPOS DE REPORTE -->
+  <div class="rep-types">
+    ${[["Storecheck General","Reporte completo de visitas y stock","var(--primary)"],
+       ["Nuevos Puestos","PDVs registrados en el período","var(--success)"],
+       ["Sin Información","Mercados sin data de mercaderista","var(--warning)"],
+       ["Validación","Verificar integridad de datos","var(--purple)"]].map(([t,d,c])=>`
+      <div class="rep-type-card" onclick="showNotif('Generando: ${t}...')">
+        <div style="width:36px;height:36px;border-radius:8px;background:${c}15;display:flex;align-items:center;justify-content:center;flex-shrink:0"><svg width="16" height="16" fill="none" stroke="${c}" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
+        <div><div style="font-size:13px;font-weight:700;color:var(--navy)">${t}</div><div style="font-size:11px;color:var(--gray);margin-top:2px">${d}</div></div>
+      </div>`).join("")}
+  </div>
+
+  <!-- TABLA DE RESULTADOS -->
+  <div class="card card-0">
+    <div style="padding:16px 20px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+      <div>
+        <div style="font-size:14px;font-weight:700;color:var(--navy)">Storechecks Registrados</div>
+        <div style="font-size:12px;color:var(--gray);margin-top:2px">${dataFiltrada.length} resultado(s)${hayFiltros?" con filtros aplicados":""}</div>
+      </div>
+      <div style="display:flex;gap:8px">
+        ${hayFiltros?`<button class="btn btn-secondary btn-sm" onclick="limpiarFiltros()">✕ Limpiar filtros</button>`:""}
+        <button class="btn btn-primary btn-sm" style="background:var(--purple)" onclick="showExportModal()">${IC.download} Exportar .xlsx</button>
+      </div>
+    </div>
+    <div class="tbl-wrap">
+      <table id="rep-table">
+        <thead><tr><th>PDV</th><th>Puesto</th><th>Fecha</th><th>Mercaderista</th><th>Actividad</th><th>SKUs</th><th>Estado</th><th class="td-actions">Acc.</th></tr></thead>
+        <tbody>
+          ${dataFiltrada.length>0?dataFiltrada.map(sc=>`<tr>
+            <td class="td-bold">${sc.pdv}</td>
+            <td class="td-muted" style="font-size:11px">${sc.puesto||"—"}</td>
+            <td class="td-muted">${sc.fecha}</td>
+            <td class="td-muted">${sc.mercaderista}</td>
+            <td class="td-muted">${sc.actividad}</td>
+            <td>${badge(sc.skus+" SKUs","info")}</td>
+            <td>${badge(sc.estado,scC[sc.estado])}</td>
+            <td class="td-actions"><div class="td-actions-inner"><button class="btn btn-ghost btn-sm" onclick="showNotif('Exportando: ${sc.pdv}')">${IC.download}</button></div></td>
+          </tr>`).join(""):`<tr><td colspan="8" class="tbl-empty" style="padding:40px">
+            <svg width="32" height="32" fill="none" stroke="var(--gray)" stroke-width="1.5" viewBox="0 0 24 24" style="margin-bottom:10px;opacity:.4"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <div>No se encontraron registros con los filtros seleccionados</div>
+            <button onclick="limpiarFiltros()" style="margin-top:10px;font-size:12px;color:var(--primary);background:none;border:none;cursor:pointer;font-weight:600">Limpiar filtros</button>
+          </td></tr>`}
+        </tbody>
+      </table>
+    </div>
+  </div>`;
+}
+
+// Abrir/cerrar panel de filtro
+function toggleFilterPanel(){
+  filterPanelOpen=!filterPanelOpen;
+  const fp=document.getElementById("filter-panel");
+  const btn=document.getElementById("btn-filtro");
+  if(fp){fp.style.display=filterPanelOpen?"block":"none"}
+  if(btn){btn.className="btn btn-sm "+(filterPanelOpen?"btn-primary":"btn-secondary")}
+}
+function cerrarFiltro(){filterPanelOpen=false;renderView("reportes")}
+
+// Aplicar filtros y re-renderizar tabla
+function aplicarFiltro(){
+  // Leer valores actuales del DOM
+  const sc=document.getElementById("fp-sc");
+  const ctrl=document.getElementById("fp-ctrl");
+  const sup=document.getElementById("fp-sup");
+  const gest=document.getElementById("fp-gest");
+  const fi=document.getElementById("fp-fi");
+  const ff=document.getElementById("fp-ff");
+  repFiltros.storecheck=sc?sc.value:"";
+  repFiltros.controller=ctrl?ctrl.value:"";
+  repFiltros.supervisor=sup?sup.value:"";
+  repFiltros.gestor=gest?gest.value:"";
+  repFiltros.fechaIni=fi?fi.value:"";
+  repFiltros.fechaFin=ff?ff.value:"";
+  // Copiar a aplicados
+  repFiltrosAplicados={...repFiltros};
+  filterPanelOpen=false;
+  showNotif("Filtros aplicados correctamente");
+  renderView("reportes");
+}
+
+function limpiarFiltros(){
+  repFiltros={storecheck:"",controller:"",supervisor:"",gestor:"",fechaIni:"",fechaFin:""};
+  repFiltrosAplicados={storecheck:"",controller:"",supervisor:"",gestor:"",fechaIni:"",fechaFin:""};
+  filterPanelOpen=false;
+  showNotif("Filtros eliminados");
+  renderView("reportes");
+}
+
+function filterRepTable(q){
+  const rows=document.querySelectorAll("#rep-table tbody tr");
+  rows.forEach(r=>{r.style.display=r.textContent.toLowerCase().includes(q.toLowerCase())?"":"none"});
+}
+
+function showExportModal(){
+  const num=SC_DATA.length+1;
+  openModal("Generar Reporte Storecheck (.xlsx)",`
+    <p style="font-size:13px;color:var(--gray);margin-bottom:16px">Selecciona los mercados y SKUs a incluir. Los mercados sin data se marcarán como <strong>"Visita no realizada"</strong>.</p>
+    <div class="field"><label>Mercados a incluir</label>
+      <div class="multi-select-box">${PDV_DATA.map(p=>`<label class="multi-select-item"><input type="checkbox" checked value="${p.nombre}"> ${p.nombre} <span style="margin-left:auto;font-size:11px;color:var(--gray)">${p.distrito}</span></label>`).join("")}</div>
+    </div>
+    <div class="field"><label>Filtrar SKUs por categoría</label>
+      <select onchange="filterRepSKUs(this.value)"><option value="">Todas</option>${[...new Set(SKU_DATA.map(s=>s.categoria))].map(c=>`<option>${c}</option>`).join("")}</select>
+    </div>
+    <div class="field"><label>SKUs a incluir</label>
+      <div class="multi-select-box" id="rep-skus-box">${SKU_DATA.filter(s=>s.activo).map(s=>`<label class="multi-select-item"><input type="checkbox" checked> ${s.nombre} ${badge(s.categoria,"info")}</label>`).join("")}</div>
+    </div>
+    <div class="field"><label>Nombre del archivo</label>
+      <input id="rep-fn" value="${num}_storecheck_promo_verano_2026">
+      <div class="field-hint">Formato sugerido: Nº_storecheck_actividad</div>
+    </div>
+    <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:8px">
+      <button class="btn btn-secondary" onclick="closeModalDirect()">Cancelar</button>
+      <button class="btn" style="background:var(--purple);color:#fff" onclick="exportar()">${IC.download} Generar y Descargar</button>
+    </div>`,"wide");
+}
+function filterRepSKUs(cat){
+  const box=document.getElementById("rep-skus-box");if(!box)return;
+  const f=cat?SKU_DATA.filter(s=>s.activo&&s.categoria===cat):SKU_DATA.filter(s=>s.activo);
+  box.innerHTML=f.map(s=>`<label class="multi-select-item"><input type="checkbox" checked> ${s.nombre} ${badge(s.categoria,"info")}</label>`).join("");
+}
+function exportar(){
+  const fn=document.getElementById("rep-fn").value||"storecheck";
+  closeModalDirect();showNotif(`Exportando: ${fn}.xlsx — incluye Stock Inicial, Stock Final y Actividad Promocional`);
+}
+
+// ═══════════════ VALIDACIONES ═══════════════
+function renderValidaciones(){
+  const comp=SC_DATA.filter(s=>s.estado==="Completado").length;
+  const pend=SC_DATA.filter(s=>s.estado!=="Completado").length;
+  const foto=SC_DATA.filter(s=>s.foto).length;
+  return`
+  <div class="kpi-grid" style="margin-bottom:24px">
+    <div class="kpi-card"><div><div class="kpi-label">Pendientes</div><div class="kpi-value">${pend}</div></div><div class="kpi-icon" style="background:rgba(245,158,11,.12)"><svg width="20" height="20" fill="none" stroke="var(--warning)" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div></div>
+    <div class="kpi-card"><div><div class="kpi-label">Completados</div><div class="kpi-value">${comp}</div></div><div class="kpi-icon" style="background:rgba(16,185,129,.12)"><svg width="20" height="20" fill="none" stroke="var(--success)" stroke-width="2" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div></div>
+    <div class="kpi-card"><div><div class="kpi-label">Con Foto</div><div class="kpi-value">${foto}</div></div><div class="kpi-icon" style="background:rgba(14,165,233,.12)"><svg width="20" height="20" fill="none" stroke="var(--primary)" stroke-width="2" viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></div></div>
+  </div>
+  <div class="card">
+    <div style="font-size:14px;font-weight:700;color:var(--navy);margin-bottom:4px">Módulo de Validación y Corrección</div>
+    <p style="font-size:13px;color:var(--gray);margin:0 0 20px">Revisa y aprueba la información antes de generar reportes finales.</p>
+    ${SC_DATA.map((sc,i)=>`
+      <div class="val-row" style="border-left:3px solid ${sc.estado==='Completado'?'var(--success)':sc.estado==='En Proceso'?'var(--warning)':'var(--gray)'}">
+        <div class="val-icon" style="background:${sc.estado==='Completado'?'rgba(16,185,129,.15)':'rgba(245,158,11,.15)'}">
+          ${sc.estado==="Completado"?`<svg width="16" height="16" fill="none" stroke="#10B981" stroke-width="2.5" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>`:`<svg width="16" height="16" fill="none" stroke="#F59E0B" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>`}
+        </div>
+        <div style="flex:1">
+          <div style="font-size:13px;font-weight:600;color:var(--navy)">${sc.pdv}</div>
+          <div style="font-size:11px;color:var(--gray)">${sc.puesto||""} · ${sc.mercaderista} · ${sc.fecha} · ${sc.skus} SKUs${sc.observaciones?" · "+sc.observaciones:""}</div>
+        </div>
+        ${badge(sc.foto?"Con foto":"Sin foto",sc.foto?"success":"danger")}
+        ${badge(sc.estado,{Completado:"success","En Proceso":"warning",Pendiente:"default"}[sc.estado])}
+        ${sc.estado!=="Completado"?`<button class="btn btn-success btn-sm" onclick="validateSC(${i})">${IC.checkCircle} Validar</button>`:""}
+      </div>`).join("")}
+  </div>`;
+}
+function validateSC(idx){SC_DATA[idx].estado="Completado";showNotif("Storecheck validado y aprobado");renderView("validaciones")}
+
+// ═══════════════ USUARIOS ═══════════════
+function renderUsuarios(){
+  return`
+  <div class="toolbar" style="justify-content:space-between;align-items:center;flex-wrap:wrap">
+    <span style="font-size:13px;color:var(--gray)">Mercaderistas: solo acceso al formulario de campo · Analistas: acceso completo</span>
+    <button class="btn btn-primary btn-sm" onclick="openNewUserModal()">${IC.plus} Nuevo Usuario</button>
+  </div>
+  <div class="card card-0">
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Nombre</th><th>Correo</th><th>Rol</th><th>Estado</th><th>Activar/Desactivar</th><th class="td-actions">Acciones</th></tr></thead>
+        <tbody>
+          ${USERS.map(u=>`<tr style="opacity:${u.status==='Activo'?1:.65}">
+            <td><div style="display:flex;align-items:center;gap:10px">
+              <div class="user-avatar" style="background:${ROLE_COLORS[u.role]}22;color:${ROLE_COLORS[u.role]}">${avatarInitials(u.name)}</div>
+              <span class="td-bold">${u.name}</span>
+            </div></td>
+            <td class="td-muted">${u.email}</td>
+            <td>${badge(ROLE_LABELS[u.role]||u.role,u.role==="admin"?"purple":u.role==="analista"?"info":"success")}</td>
+            <td>${badge(u.status,u.status==="Activo"?"success":"default")}</td>
+            <td><label class="switch"><input type="checkbox" ${u.status==="Activo"?"checked":""} onchange="toggleUser(${u.id},this.checked)"><span class="slider"></span></label></td>
+            <td class="td-actions"><div class="td-actions-inner">
+              <button class="btn btn-ghost btn-sm" onclick="showNotif('Editando: ${u.name}')">${IC.edit}</button>
+            </div></td>
+          </tr>`).join("")}
+        </tbody>
+      </table>
+    </div>
+  </div>`;
+}
+function toggleUser(id,active){const u=USERS.find(x=>x.id===id);if(u){u.status=active?"Activo":"Inactivo";showNotif(`Usuario ${active?"activado":"desactivado"}`);renderView("usuarios")}}
+function openNewUserModal(){
+  openModal("Crear Nuevo Usuario",`
+    <div class="field"><label>Nombre completo *</label><input id="u-nom" placeholder="Nombres y Apellidos"></div>
+    <div class="field"><label>Correo electrónico *</label><input id="u-email" type="email" placeholder="usuario@trademart.pe"></div>
+    <div class="field"><label>Rol *</label>
+      <select id="u-rol">
+        <option value="mercaderista">Mercaderista — Solo formulario de campo</option>
+        <option value="analista">Analista — Acceso completo a validación y reportes</option>
+        <option value="admin">Administrador</option>
+      </select>
+    </div>
+    <div class="field"><label>Contraseña temporal</label><input id="u-pass" type="password" placeholder="Dejar vacío para auto-generar"></div>
+    <div style="display:flex;gap:10px;justify-content:flex-end">
+      <button class="btn btn-secondary" onclick="closeModalDirect()">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveUser()">${IC.save} Crear Usuario</button>
+    </div>`);
+}
+function saveUser(){
+  const nom=document.getElementById("u-nom").value.trim();const email=document.getElementById("u-email").value.trim();const rol=document.getElementById("u-rol").value;const pass=document.getElementById("u-pass").value||"TM"+Math.random().toString(36).slice(2,8).toUpperCase();
+  if(!nom||!email){showNotif("Nombre y correo son requeridos","error");return}
+  if(USERS.find(u=>u.email===email)){showNotif("Ya existe un usuario con ese correo","error");return}
+  USERS.push({id:Date.now(),name:nom,email,role:rol,password:pass,status:"Activo"});
+  closeModalDirect();showNotif(`Usuario creado — contraseña enviada a ${email}`);renderView("usuarios");
+}
+</script>
+</body>
+</html>
