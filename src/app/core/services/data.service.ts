@@ -1,0 +1,290 @@
+import { Injectable, signal, Inject, PLATFORM_ID } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
+import { HttpClient } from '@angular/common/http';
+import { User } from '../models/user.model';
+import { PDV } from '../models/pdv.model';
+import { SKU } from '../models/sku.model';
+import { Actividad } from '../models/actividad.model';
+import { Storecheck } from '../models/storecheck.model';
+
+@Injectable({
+  providedIn: 'root'
+})
+export class DataService {
+  users = signal<User[]>([]);
+  pdvs = signal<PDV[]>([]);
+  skus = signal<SKU[]>([]);
+  actividades = signal<Actividad[]>([]);
+  storechecks = signal<Storecheck[]>([]);
+
+  private apiUrl = 'http://localhost:8080/api/data';
+  private apiUsuarios = 'http://localhost:8080/api/usuarios';
+
+  constructor(private http: HttpClient, @Inject(PLATFORM_ID) private platformId: Object) { 
+    if (isPlatformBrowser(this.platformId)) {
+      this.loadUsers();
+      this.loadPdvs();
+      this.loadSkus();
+      this.loadActividades();
+      this.loadStorechecks();
+    }
+  }
+
+  // ==== USUARIOS ====
+  loadUsers() {
+    this.http.get<User[]>(this.apiUsuarios).subscribe({
+      next: (data) => this.users.set(data),
+      error: (err) => console.error('Error fetching users', err)
+    });
+  }
+
+  updateUser(updated: User) {
+    if (!updated.id) return;
+    this.http.put(`${this.apiUsuarios}/${updated.id}`, updated).subscribe({
+      next: () => {
+        this.users.update(list => list.map(u => u.id === updated.id ? updated : u));
+        this.showNotification('Usuario actualizado', 'success');
+      },
+      error: (err) => this.showNotification('Error al actualizar', 'error')
+    });
+  }
+
+  deleteUser(id: number) {
+    this.http.delete(`${this.apiUsuarios}/${id}`).subscribe({
+      next: () => {
+        this.users.update(list => list.filter(u => u.id !== id));
+        this.showNotification('Usuario eliminado', 'success');
+      },
+      error: (err) => this.showNotification('Error al eliminar', 'error')
+    });
+  }
+  
+  addUser(user: User) {
+    this.http.post<any>(this.apiUsuarios, user).subscribe({
+      next: res => {
+        if(res.success || res.id) {
+          user.id = res.id;
+          this.users.update(list => [...list, user]);
+          this.showNotification('Usuario creado', 'success');
+        }
+      },
+      error: err => this.showNotification('Error al crear usuario', 'error')
+    });
+  }
+
+  // ==== PDVs ====
+  loadPdvs() {
+    this.http.get<any[]>(`${this.apiUrl}/pdvs`).subscribe({
+      next: (data) => {
+        const mapped = data.map(d => ({
+          id: d.pdvId, nombre: d.pdvNombre, codigo: d.codigo, distrito: d.distrito,
+          tipo: d.tipo, estado: d.estado, mercaderista: d.mercaderista, 
+          visitas: d.visitas, pendiente: d.pendiente, puestos: [] as any[]
+        }));
+        this.pdvs.set(mapped);
+        // Cargar puestos de mercado de la BD y asignarlos a cada PDV
+        this.loadPuestos();
+      },
+      error: (err) => console.error('Error fetching PDVs', err)
+    });
+  }
+
+  loadPuestos() {
+    this.http.get<any[]>(`${this.apiUrl}/pms`).subscribe({
+      next: (pms) => {
+        this.pdvs.update(pdvList => {
+          return pdvList.map(pdv => ({
+            ...pdv,
+            puestos: pms.filter(pm => pm.pdvId === pdv.id).map(pm => ({
+              pmId: pm.pmId,
+              num: 'P-' + String(pm.pmId).padStart(2, '0'),
+              nombre: pm.pmNombre,
+              actIds: pm.actIds || []
+            }))
+          }));
+        });
+      }
+    });
+  }
+
+  addPuesto(pdvId: number, nombre: string, actIds: number[]) {
+    const payload = { pmNombre: nombre, pdvId, actIds };
+    this.http.post<any>(`${this.apiUrl}/pms`, payload).subscribe({
+      next: () => {
+        this.loadPdvs();
+        this.showNotification('Puesto agregado exitosamente');
+      },
+      error: () => this.showNotification('Error al crear puesto', 'error')
+    });
+  }
+
+  updatePuesto(pmId: number, nombre: string, pdvId: number, actIds: number[]) {
+    const payload = { pmNombre: nombre, pdvId, actIds };
+    this.http.put(`${this.apiUrl}/pms/${pmId}`, payload).subscribe({
+      next: () => {
+        this.loadPdvs();
+        this.showNotification('Puesto actualizado');
+      },
+      error: () => this.showNotification('Error al actualizar puesto', 'error')
+    });
+  }
+
+  deletePuesto(pmId: number) {
+    this.http.delete(`${this.apiUrl}/pms/${pmId}`).subscribe({
+      next: () => {
+        this.loadPdvs();
+        this.showNotification('Puesto eliminado');
+      },
+      error: () => this.showNotification('Error al eliminar puesto', 'error')
+    });
+  }
+  
+  updatePDV(updated: PDV) {
+    const payload = { pdvId: updated.id, pdvNombre: updated.nombre, codigo: updated.codigo, distrito: updated.distrito, tipo: updated.tipo, estado: updated.estado, mercaderista: updated.mercaderista, visitas: updated.visitas, pendiente: updated.pendiente };
+    this.http.put(`${this.apiUrl}/pdvs/${updated.id}`, payload).subscribe({
+      next: () => {
+        this.pdvs.update(list => list.map(p => p.id === updated.id ? updated : p));
+        this.showNotification('PDV actualizado', 'success');
+      },
+      error: () => this.showNotification('Error', 'error')
+    });
+  }
+
+  addPDV(pdv: PDV) {
+    const payload = { pdvNombre: pdv.nombre, codigo: pdv.codigo, distrito: pdv.distrito, tipo: pdv.tipo, estado: pdv.estado, mercaderista: pdv.mercaderista, visitas: pdv.visitas, pendiente: pdv.pendiente };
+    this.http.post<any>(`${this.apiUrl}/pdvs`, payload).subscribe({
+      next: (res) => {
+        pdv.id = res.pdvId;
+        this.pdvs.update(list => [...list, pdv]);
+        this.showNotification('PDV creado', 'success');
+      },
+      error: () => this.showNotification('Error', 'error')
+    });
+  }
+
+  // ==== SKUs ====
+  loadSkus() {
+    this.http.get<any[]>(`${this.apiUrl}/productos`).subscribe({
+      next: (data) => {
+        const mapped = data.map(d => ({
+          id: d.productoId, codigo: `SKU-00${d.productoId}`, nombre: d.nombre, 
+          marca: d.marca, categoria: d.categoria, activo: d.estado
+        }));
+        this.skus.set(mapped);
+      },
+      error: (err) => console.error('Error fetching SKUs', err)
+    });
+  }
+
+  updateSKU(updated: SKU) {
+    const payload = { nombre: updated.nombre, marca: updated.marca, categoria: updated.categoria, estado: updated.activo, precio: 0 };
+    this.http.put(`${this.apiUrl}/productos/${updated.id}`, payload).subscribe({
+      next: () => {
+        this.skus.update(list => list.map(s => s.id === updated.id ? updated : s));
+        this.showNotification('SKU actualizado', 'success');
+      }
+    });
+  }
+
+  addSKU(sku: SKU) {
+    const payload = { nombre: sku.nombre, marca: sku.marca, categoria: sku.categoria, estado: sku.activo, precio: 0 };
+    this.http.post<any>(`${this.apiUrl}/productos`, payload).subscribe({
+      next: (res) => {
+        sku.id = res.productoId;
+        sku.codigo = `SKU-00${res.productoId}`;
+        this.skus.update(list => [...list, sku]);
+        this.showNotification('SKU creado', 'success');
+      }
+    });
+  }
+
+  // ==== ACTIVIDADES ====
+  loadActividades() {
+    this.http.get<any[]>(`${this.apiUrl}/actividades`).subscribe({
+      next: (data) => {
+        const mapped = data.map(d => ({
+          id: d.actId, nombre: d.nombre || d.actPromocional, tipo: d.tipo, estado: d.estado, 
+          inicio: d.inicio, fin: d.fin, descripcion: d.descripcion,
+          skuIds: d.skuIds ? d.skuIds.split(',').map(Number) : []
+        }));
+        this.actividades.set(mapped);
+      }
+    });
+  }
+
+  updateActividad(updated: Actividad) {
+    const payload = { nombre: updated.nombre, tipo: updated.tipo, estado: updated.estado, inicio: updated.inicio, fin: updated.fin, descripcion: updated.descripcion, skuIds: updated.skuIds.join(',') };
+    this.http.put(`${this.apiUrl}/actividades/${updated.id}`, payload).subscribe({
+      next: () => {
+        this.actividades.update(list => list.map(a => a.id === updated.id ? updated : a));
+        this.showNotification('Actividad actualizada', 'success');
+      }
+    });
+  }
+
+  addActividad(actividad: Actividad) {
+    const payload = { nombre: actividad.nombre, tipo: actividad.tipo, estado: actividad.estado, inicio: actividad.inicio, fin: actividad.fin, descripcion: actividad.descripcion, skuIds: actividad.skuIds.join(',') };
+    this.http.post<any>(`${this.apiUrl}/actividades`, payload).subscribe({
+      next: (res) => {
+        actividad.id = res.actId;
+        this.actividades.update(list => [...list, actividad]);
+        this.showNotification('Actividad creada', 'success');
+      }
+    });
+  }
+
+  deleteActividad(id: number) {
+    this.http.delete(`${this.apiUrl}/actividades/${id}`).subscribe({
+      next: () => {
+        this.actividades.update(list => list.filter(a => a.id !== id));
+        this.showNotification('Actividad eliminada', 'success');
+      }
+    });
+  }
+
+  // ==== STORECHECKS ====
+  loadStorechecks() {
+    this.http.get<any[]>(`${this.apiUrl}/reportes`).subscribe({
+      next: (data) => {
+        const mapped = data.map(d => ({
+          id: d.registroReporteId, pdv: d.pdv, puesto: d.puesto, fecha: d.fechaStr, 
+          mercaderista: d.mercaderista, estado: d.estado, skus: d.skus, foto: d.foto, 
+          actividad: d.actividad, observaciones: d.observaciones,
+          pmId: d.pm ? d.pm.pmId : undefined
+        }));
+        this.storechecks.set(mapped.reverse());
+      }
+    });
+  }
+
+  updateStorecheck(updated: Storecheck) {
+    const payload = { pdv: updated.pdv, puesto: updated.puesto, fechaStr: updated.fecha, mercaderista: updated.mercaderista, estado: updated.estado, skus: updated.skus, foto: updated.foto, actividad: updated.actividad, observaciones: updated.observaciones, pm: updated.pmId ? { pmId: updated.pmId } : null };
+    this.http.put(`${this.apiUrl}/reportes/${updated.id}`, payload).subscribe({
+      next: () => {
+        this.storechecks.update(list => list.map(s => s.id === updated.id ? updated : s));
+        this.showNotification('Storecheck guardado', 'success');
+      }
+    });
+  }
+
+  addStorecheck(sc: Storecheck) {
+    const payload = { pdv: sc.pdv, puesto: sc.puesto, fechaStr: sc.fecha, mercaderista: sc.mercaderista, estado: sc.estado, skus: sc.skus, foto: sc.foto, actividad: sc.actividad, observaciones: sc.observaciones, pm: sc.pmId ? { pmId: sc.pmId } : null };
+    this.http.post<any>(`${this.apiUrl}/reportes`, payload).subscribe({
+      next: (res) => {
+        sc.id = res.registroReporteId;
+        this.storechecks.update(list => [sc, ...list]);
+        this.showNotification('Storecheck enviado', 'success');
+      }
+    });
+  }
+
+  showNotification(message: string, type: 'success' | 'error' = 'success') {
+    const el = document.getElementById("notif");
+    if(el) {
+      el.style.background = type === "success" ? "#10B981" : "#EF4444";
+      el.innerHTML = `<svg width="16" height="16" fill="none" stroke="#fff" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> ${message}`;
+      el.style.display = "flex";
+      setTimeout(() => { el.style.display = "none" }, 3200);
+    }
+  }
+}

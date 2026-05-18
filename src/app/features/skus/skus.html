@@ -1,0 +1,90 @@
+<div class="toolbar">
+  <div class="searchbar">
+    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    <input placeholder="Buscar SKU..." (input)="updateFilter($event)" [value]="filter()">
+  </div>
+  <button class="btn btn-secondary btn-sm" (click)="dataService.showNotification('Importando SKUs desde Excel...')">
+    <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+    Carga Masiva Excel
+  </button>
+  <button class="btn btn-primary btn-sm" (click)="openNewSKUModal()">
+    <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    Nuevo SKU
+  </button>
+</div>
+<div class="card card-0">
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>Código</th><th>Producto</th><th>Marca</th><th>Categoría</th><th>Estado</th><th>Activar / Desactivar</th><th class="td-actions">Acciones</th></tr></thead>
+      <tbody>
+        @for(s of filteredSKUs(); track s.id) {
+          <tr [style.opacity]="s.activo?1:.6">
+            <td><span class="code-tag">{{s.codigo}}</span></td>
+            <td class="td-bold">{{s.nombre}}</td>
+            <td class="td-muted">{{s.marca}}</td>
+            <td><span class="badge badge-info">{{s.categoria}}</span></td>
+            <td><span class="badge" [class]="s.activo?'badge-success':'badge-default'">{{s.activo?'Activo':'Inactivo'}}</span></td>
+            <td>
+              <div style="display:flex;align-items:center;gap:8px">
+                <label class="switch"><input type="checkbox" [checked]="s.activo" (change)="toggleSKU(s.id, $event)"><span class="slider"></span></label>
+                <span style="font-size:12px;color:var(--text-muted)">{{s.activo?'Activo':'Inactivo'}}</span>
+              </div>
+            </td>
+            <td class="td-actions">
+              <div class="td-actions-inner">
+                <button class="btn btn-ghost btn-sm" (click)="dataService.showNotification('Editando: ' + s.nombre)"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+              </div>
+            </td>
+          </tr>
+        }
+        @if(filteredSKUs().length === 0) {
+          <tr><td colspan="7" class="tbl-empty">No se encontraron SKUs</td></tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</div>
+
+@if(showModal()) {
+<div class="modal-overlay" (click)="closeModal()">
+  <div class="modal-box narrow" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <div class="modal-title">Registrar Nuevo SKU</div>
+      <button class="modal-close" (click)="closeModal()">
+        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="field">
+        <label>Nombre del Producto *</label>
+        <input #skuNombre type="text" placeholder="Ej: Galletas Choco">
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>Código (EAN/SKU)</label>
+          <input #skuCodigo type="text" placeholder="SKU-XXX">
+        </div>
+        <div class="field">
+          <label>Marca</label>
+          <input #skuMarca type="text" placeholder="Marca del producto">
+        </div>
+      </div>
+      <div class="field">
+        <label>Categoría</label>
+        <select #skuCat>
+          <option>Bebidas</option>
+          <option>Lácteos</option>
+          <option>Snacks</option>
+          <option>Confitería</option>
+          <option>Cuidado Personal</option>
+        </select>
+      </div>
+      <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:24px">
+        <button class="btn btn-secondary" (click)="closeModal()">Cancelar</button>
+        <button class="btn btn-primary" (click)="saveNewSKU(skuNombre.value, skuCodigo.value, skuMarca.value, skuCat.value)">Guardar SKU</button>
+      </div>
+    </div>
+  </div>
+</div>
+}
+

@@ -1,0 +1,255 @@
+@if(scStep() === 0) {
+<div class="toolbar">
+  <div class="searchbar">
+    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    <input placeholder="Buscar storecheck..." (input)="updateFilter($event)" [value]="filter()">
+  </div>
+  <button class="btn btn-secondary btn-sm"><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg> Filtros</button>
+  <button class="btn btn-primary btn-sm" (click)="startNewSC()"><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Nuevo Storecheck</button>
+</div>
+<div class="card card-0">
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>Punto de Venta</th><th>Puesto</th><th>Fecha</th><th>Mercaderista</th><th>Actividad</th><th>SKUs</th><th>Foto</th><th>Estado</th><th>Obs.</th><th class="td-actions">Acciones</th></tr></thead>
+      <tbody>
+        @for(sc of filteredSCs(); track sc.id) {
+          <tr>
+            <td class="td-bold">{{sc.pdv}}</td>
+            <td class="td-muted" style="font-size:12px">{{sc.puesto||"—"}}</td>
+            <td class="td-muted">{{sc.fecha}}</td>
+            <td class="td-muted">{{sc.mercaderista}}</td>
+            <td class="td-muted">{{sc.actividad}}</td>
+            <td><span class="badge badge-info">{{sc.skus}} SKUs</span></td>
+            <td>
+              @if(sc.foto) { <svg width="15" height="15" fill="none" stroke="#10B981" stroke-width="2.5" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> }
+              @else { <svg width="15" height="15" fill="none" stroke="#EF4444" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg> }
+            </td>
+            <td><span class="badge" [class]="sc.estado==='Completado'?'badge-success':(sc.estado==='Pendiente'||sc.estado==='En Proceso'?'badge-warning':'badge-default')">{{sc.estado}}</span></td>
+            <td class="td-muted" style="font-size:11px;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" [title]="sc.observaciones">{{sc.observaciones||"—"}}</td>
+            <td class="td-actions">
+              <div class="td-actions-inner">
+                <button class="btn btn-ghost btn-sm"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+              </div>
+            </td>
+          </tr>
+        }
+        @if(filteredSCs().length === 0) { <tr><td colspan="10" class="tbl-empty">No hay storechecks registrados</td></tr> }
+      </tbody>
+    </table>
+  </div>
+</div>
+} @else {
+  <div style="display:flex;align-items:center;gap:12px;margin-bottom:24px">
+    <button class="btn btn-ghost btn-sm" (click)="cancelSC()"><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg> Volver</button>
+    <h3 style="font-size:15px;font-weight:700;color:var(--text-main)">Nuevo Storecheck — Paso {{scStep()}} de {{SC_STEPS.length}}</h3>
+  </div>
+  <div class="steps-bar">
+    @for(s of SC_STEPS; track $index) {
+      <div class="step-item">
+        <div class="step-col">
+          <div class="step-circle" [class]="($index + 1) < scStep() ? 'done' : ($index + 1) === scStep() ? 'active' : 'pending'">
+            @if(($index + 1) < scStep()) {
+              <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+            } @else { {{$index + 1}} }
+          </div>
+          <div class="step-label" [class]="($index + 1) === scStep() ? 'active' : 'other'">{{s}}</div>
+        </div>
+        @if($index < SC_STEPS.length - 1) {
+          <div class="step-line" [class]="($index + 1) < scStep() ? 'done' : 'pending'"></div>
+        }
+      </div>
+    }
+  </div>
+
+  <div class="card" style="max-width:720px;margin:0 auto">
+    <!-- PASO 1 -->
+    @if(scStep() === 1) {
+      <h4 style="margin:0 0 16px;color:var(--text-main)">Paso 1 — Selección de Punto de Venta</h4>
+      <div class="field"><label>Punto de Venta *</label>
+        <select [(ngModel)]="scForm().pdv">
+          <option value="">-- Seleccionar PDV --</option>
+          @for(p of pdvActivos(); track p.id) {
+            <option [value]="p.nombre">{{p.nombre}} — {{p.distrito}} ({{p.puestos.length}} puestos)</option>
+          }
+        </select>
+      </div>
+      <div class="field"><label>Observaciones generales <span style="font-size:11px;color:var(--text-muted)">(incidencias, puesto cerrado, etc.)</span></label>
+        <textarea rows="2" [(ngModel)]="scForm().observaciones" placeholder="Ej: Tráfico alto, acceso demorado..."></textarea>
+      </div>
+      <button class="btn btn-primary" (click)="scStep1Next()">Continuar <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></button>
+    }
+
+    <!-- PASO 2 -->
+    @if(scStep() === 2) {
+      <h4 style="margin:0 0 6px;color:var(--text-main)">Paso 2 — Seleccionar Puesto de Mercado</h4>
+      <p style="font-size:13px;color:var(--text-muted);margin:0 0 16px">PDV: <strong>{{scForm().pdv}}</strong> · Selecciona el puesto específico que visitarás.</p>
+      @if(pdvSeleccionado()?.puestos?.length) {
+        <div style="max-height:280px;overflow-y:auto;margin-bottom:20px">
+          @for(p of pdvSeleccionado()?.puestos; track p.num) {
+            <div class="puesto-row" [class.selected]="scForm().puestoNum === p.num" (click)="selectPuesto(p.num, p.nombre, p.pmId)">
+              <div class="puesto-num">{{p.num}}</div>
+              <div style="flex:1">
+                <div style="font-size:14px;font-weight:600;color:var(--text-main)">{{p.nombre}}</div>
+                <div style="font-size:11px;color:var(--text-muted)">Número de puesto: {{p.num}}</div>
+              </div>
+              @if(scForm().puestoNum === p.num) {
+                <div style="color:var(--primary)"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div>
+              }
+            </div>
+          }
+        </div>
+        @if(scForm().puestoNum) {
+          <div class="alert-info" style="margin-bottom:12px"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> Puesto seleccionado: <strong>{{scForm().puestoNum}} — {{scForm().puestoNombre}}</strong></div>
+        }
+      } @else {
+        <div class="alert-warn" style="margin-bottom:16px"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg> Este PDV no tiene puestos registrados. Puedes continuar sin seleccionar uno.</div>
+      }
+      <div style="display:flex;gap:10px">
+        <button class="btn btn-secondary" (click)="prevStep()">Atrás</button>
+        <button class="btn btn-primary" (click)="nextStep()">Continuar <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></button>
+      </div>
+    }
+
+    <!-- PASO 3: Actividad con checkbox -->
+    @if(scStep() === 3) {
+      <h4 style="margin:0 0 6px;color:var(--text-main)">Paso 3 — Actividad Promocional</h4>
+      <p style="font-size:13px;color:var(--text-muted);margin:0 0 16px">Selecciona la actividad vigente que corresponde a esta visita.</p>
+      <div class="sku-multiselect" style="margin-bottom:16px">
+        @for(a of actVigentes(); track a.id) {
+          <div class="sku-check-item" [class.selected]="scForm().actividadId === a.id" (click)="selectActividad(a.id, a.nombre)">
+            <div class="sku-check-box" [class.checked]="scForm().actividadId === a.id">
+              @if(scForm().actividadId === a.id) {
+                <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+              }
+            </div>
+            <div style="width:36px;height:36px;border-radius:8px;background:rgba(245,158,11,.12);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+              <svg width="16" height="16" fill="none" stroke="#F59E0B" stroke-width="2" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+            </div>
+            <div style="flex:1">
+              <div style="font-size:13px;font-weight:700;color:var(--text-main)">{{a.nombre}}</div>
+              <div style="font-size:11px;color:var(--text-muted);margin-top:2px">{{a.tipo}} · Hasta {{a.fin}}</div>
+              @if(a.skuIds.length) { <div style="font-size:11px;color:var(--purple);margin-top:3px">SKUs: {{getSkuNames(a.skuIds)}}</div> }
+            </div>
+            <span class="badge badge-success" style="font-size:10px">Vigente</span>
+          </div>
+        }
+        @if(!actVigentes().length) { <div class="tbl-empty">No hay actividades vigentes configuradas</div> }
+      </div>
+      @if(scForm().actividad) {
+        <div class="alert-info" style="margin-bottom:12px"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> Actividad: <strong>{{scForm().actividad}}</strong></div>
+      } @else {
+        <div class="alert-warn" style="margin-bottom:12px"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg> Puedes continuar sin seleccionar actividad.</div>
+      }
+      <div style="display:flex;gap:10px">
+        <button class="btn btn-secondary" (click)="prevStep()">Atrás</button>
+        <button class="btn btn-primary" (click)="scStep3Next()">Continuar <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></button>
+      </div>
+    }
+
+    <!-- PASO 4 -->
+    @if(scStep() === 4) {
+      <h4 style="margin:0 0 8px;color:var(--text-main)">Paso 4 — Evidencia Fotográfica</h4>
+      <p style="font-size:13px;color:var(--text-muted);margin:0 0 20px">Captura una foto probatoria del puesto de mercado.</p>
+      <div class="photo-drop" (click)="dataService.showNotification('Cámara activada — foto capturada')">
+        <div style="color:var(--text-muted);display:flex;justify-content:center"><svg width="40" height="40" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></div>
+        <div style="font-size:14px;font-weight:600;color:var(--text-main);margin-top:12px">Tomar fotografía del puesto</div>
+        <div style="font-size:12px;color:var(--text-muted);margin-top:4px">Haz clic para activar la cámara</div>
+        @if(scForm().puestoNombre) { <div style="margin-top:8px;font-size:12px;color:var(--primary);font-weight:600">Puesto: {{scForm().puestoNum}} — {{scForm().puestoNombre}}</div> }
+      </div>
+      <div style="display:flex;gap:10px">
+        <button class="btn btn-secondary" (click)="prevStep()">Atrás</button>
+        <button class="btn btn-primary" (click)="nextStep()">Confirmar y continuar <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></button>
+      </div>
+    }
+
+    <!-- PASO 5: Stock filtrado por actividad -->
+    @if(scStep() === 5) {
+      <h4 style="margin:0 0 6px;color:var(--text-main)">Paso 5 — Registro de Stock por SKU</h4>
+      @if(scForm().actividad) {
+        <div class="alert-info" style="margin-bottom:14px"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> Mostrando productos de: <strong>{{scForm().actividad}}</strong></div>
+      }
+      <div class="alert-warn" style="margin-bottom:14px"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg> Los campos Stock Inicial y Final son obligatorios.</div>
+      <div class="tbl-wrap">
+        <table class="sc-table">
+          <thead><tr><th>Producto</th><th>Cód.</th><th>Stock Inicial *</th><th>Stock Final *</th><th>¿Actividad?</th></tr></thead>
+          <tbody>
+            @for(p of scForm().productos; track p.id) {
+              <tr>
+                <td class="td-bold" style="font-size:12px">{{p.nombre}}</td>
+                <td><span class="code-tag">{{p.codigo}}</span></td>
+                <td><input type="number" min="0" placeholder="0" [(ngModel)]="p.stockInicial"></td>
+                <td><input type="number" min="0" placeholder="0" [(ngModel)]="p.stockFinal"></td>
+                <td style="text-align:center">
+                  <label class="switch"><input type="checkbox" [(ngModel)]="p.tieneActividad"><span class="slider"></span></label>
+                </td>
+              </tr>
+            }
+            @if(!scForm().productos.length) {
+              <tr><td colspan="5" class="tbl-empty">No hay productos asociados a esta actividad</td></tr>
+            }
+          </tbody>
+        </table>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:20px">
+        <button class="btn btn-secondary" (click)="prevStep()">Atrás</button>
+        <button class="btn btn-primary" (click)="scValidateStock()">Guardar y continuar <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></button>
+      </div>
+    }
+
+    <!-- PASO 6: Confirmación rediseñada -->
+    @if(scStep() === 6) {
+      <div style="text-align:center;padding:24px 0 20px">
+        <div style="width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,rgba(16,185,129,.15),rgba(14,165,233,.15));display:flex;align-items:center;justify-content:center;margin:0 auto 16px">
+          <svg width="32" height="32" fill="none" stroke="#10B981" stroke-width="2" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+        </div>
+        <h4 style="margin:0 0 4px;font-size:18px;font-weight:700;color:var(--text-main)">Storecheck listo para enviar</h4>
+        <p style="margin:0;font-size:13px;color:var(--text-muted)">Revisa los datos antes de confirmar</p>
+      </div>
+
+      <div style="border-radius:12px;border:1px solid var(--border);overflow:hidden;margin-bottom:24px">
+        <div style="padding:14px 20px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--border);background:rgba(14,165,233,.04)">
+          <svg width="16" height="16" fill="none" stroke="var(--primary)" stroke-width="2" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+          <span style="font-size:13px;font-weight:600;color:var(--text-muted)">Punto de Venta</span>
+          <span style="margin-left:auto;font-size:14px;font-weight:700;color:var(--text-main)">{{scForm().pdv || '—'}}</span>
+        </div>
+        <div style="padding:14px 20px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--border)">
+          <svg width="16" height="16" fill="none" stroke="var(--text-muted)" stroke-width="2" viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+          <span style="font-size:13px;font-weight:600;color:var(--text-muted)">Puesto</span>
+          <span style="margin-left:auto;font-size:14px;font-weight:600;color:var(--text-main)">{{scForm().puestoNum ? scForm().puestoNum + ' — ' + scForm().puestoNombre : 'No seleccionado'}}</span>
+        </div>
+        <div style="padding:14px 20px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--border)">
+          <svg width="16" height="16" fill="none" stroke="#F59E0B" stroke-width="2" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          <span style="font-size:13px;font-weight:600;color:var(--text-muted)">Actividad</span>
+          <span style="margin-left:auto;font-size:14px;font-weight:600;color:var(--text-main)">{{scForm().actividad || 'No especificada'}}</span>
+        </div>
+        <div style="padding:14px 20px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--border)">
+          <svg width="16" height="16" fill="none" stroke="var(--text-muted)" stroke-width="2" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          <span style="font-size:13px;font-weight:600;color:var(--text-muted)">Mercaderista</span>
+          <span style="margin-left:auto;font-size:14px;font-weight:600;color:var(--text-main)">{{auth.currentUser()?.name}}</span>
+        </div>
+        <div style="padding:14px 20px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--border)">
+          <svg width="16" height="16" fill="none" stroke="var(--text-muted)" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          <span style="font-size:13px;font-weight:600;color:var(--text-muted)">Fecha</span>
+          <span style="margin-left:auto;font-size:14px;font-weight:600;color:var(--text-main)">{{todayFormatted()}}</span>
+        </div>
+        <div style="padding:14px 20px;display:flex;align-items:center;gap:10px;background:rgba(14,165,233,.04)">
+          <svg width="16" height="16" fill="none" stroke="var(--primary)" stroke-width="2" viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+          <span style="font-size:13px;font-weight:600;color:var(--text-muted)">SKUs registrados</span>
+          <span style="margin-left:auto"><span class="badge badge-info" style="font-size:13px;padding:4px 12px">{{scForm().productos.length}} productos</span></span>
+        </div>
+      </div>
+
+      @if(scForm().observaciones) {
+        <div style="background:var(--bg);border-radius:10px;padding:12px 16px;margin-bottom:20px;border:1px solid var(--border)">
+          <div style="font-size:11px;font-weight:600;color:var(--text-muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px">Observaciones</div>
+          <div style="font-size:13px;color:var(--text-main)">{{scForm().observaciones}}</div>
+        </div>
+      }
+
+      <div style="display:flex;gap:10px">
+        <button class="btn btn-secondary" (click)="prevStep()">Atrás</button>
+        <button class="btn btn-success" style="flex:1;justify-content:center;gap:8px;font-size:14px;font-weight:700;padding:12px 20px" (click)="completeSC()"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> Confirmar y Enviar Storecheck</button>
+      </div>
+    }
+  </div>
+}

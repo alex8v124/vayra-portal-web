@@ -1,0 +1,82 @@
+<div class="toolbar" style="justify-content:space-between;align-items:center;flex-wrap:wrap">
+  <span style="font-size:13px;color:var(--text-muted)">Mercaderistas: solo acceso al formulario de campo · Analistas: acceso completo</span>
+  <button class="btn btn-primary btn-sm" (click)="openNewUserModal()"><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Nuevo Usuario</button>
+</div>
+<div class="card card-0">
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>Nombre</th><th>Correo</th><th>Rol</th><th>Estado</th><th>Activar/Desactivar</th><th class="td-actions">Acciones</th></tr></thead>
+      <tbody>
+        @for(u of dataService.users(); track u.id) {
+          <tr [style.opacity]="u.status==='Activo'?1:.65">
+            <td>
+              <div style="display:flex;align-items:center;gap:10px">
+                <div class="user-avatar" [style.background]="ROLE_COLORS[u.role]+'22'" [style.color]="ROLE_COLORS[u.role]">{{avatarInitials(u.name)}}</div>
+                <span class="td-bold">{{u.name}}</span>
+              </div>
+            </td>
+            <td class="td-muted">{{u.email}}</td>
+            <td><span class="badge" [class]="u.role==='admin'?'badge-purple':u.role==='analista'?'badge-info':'badge-success'">{{ROLE_LABELS[u.role] || u.role}}</span></td>
+            <td><span class="badge" [class]="u.status==='Activo'?'badge-success':'badge-default'">{{u.status}}</span></td>
+            <td><label class="switch"><input type="checkbox" [checked]="u.status==='Activo'" (change)="toggleUser(u.id, $event)"><span class="slider"></span></label></td>
+            <td class="td-actions">
+              <div class="td-actions-inner">
+                <button class="btn btn-ghost btn-sm" (click)="editUser(u)"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+              </div>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</div>
+
+@if(showModal()) {
+<div class="modal-overlay" (click)="closeModal()">
+  <div class="modal-box narrow" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <div class="modal-title">{{ newUser.id ? 'Modificar Usuario' : 'Registrar Nuevo Usuario' }}</div>
+      <button class="modal-close" (click)="closeModal()">
+        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="field">
+        <label>Nombre Completo *</label>
+        <input type="text" placeholder="Ej: Juan Pérez" [(ngModel)]="newUser.name">
+      </div>
+      <div class="field">
+        <label>Correo Electrónico *</label>
+        <input type="email" placeholder="usuario@xplora.pe" [(ngModel)]="newUser.email">
+      </div>
+      <div class="field">
+        <label>Rol de Usuario *</label>
+        <select [(ngModel)]="newUser.role">
+          <option value="admin">Administrador</option>
+          <option value="analista">Analista</option>
+          <option value="mercaderista">Mercaderista</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Contraseña</label>
+        <input type="password" 
+               [placeholder]="newUser.id ? 'Dejar en blanco para no cambiar' : 'Ingresa la contraseña o deja vacío para usar xplora2026'" 
+               [(ngModel)]="newUser.password" 
+               style="background:var(--bg);color:var(--text-main)">
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:24px">
+        <div>
+          @if(newUser.id) {
+            <button class="btn btn-secondary" style="color:var(--danger); border-color:var(--danger)" (click)="deleteUser()">Eliminar Usuario</button>
+          }
+        </div>
+        <div style="display:flex;gap:10px">
+          <button class="btn btn-secondary" (click)="closeModal()">Cancelar</button>
+          <button class="btn btn-primary" (click)="saveNewUser()">{{ newUser.id ? 'Guardar Cambios' : 'Crear Usuario' }}</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+}
+

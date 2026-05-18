@@ -1,0 +1,191 @@
+<div class="toolbar" style="justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
+  <div>
+    <span style="font-size:13px;color:var(--text-muted)">Los mercaderistas solo ven actividades <strong>Vigentes</strong> en su formulario de campo.</span>
+  </div>
+  <button class="btn btn-primary btn-sm" (click)="openNewActModal()"><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Nueva Actividad</button>
+</div>
+
+@if(vigentes().length > 0) {
+  <div style="font-size:12px;font-weight:700;color:var(--success);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">â— Vigentes ({{vigentes().length}})</div>
+  <div class="act-grid" style="margin-bottom:24px">
+    @for(a of vigentes(); track a.id) {
+      <div class="act-card" style="border-left:4px solid var(--success)">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">
+          <div style="display:flex;gap:10px;align-items:flex-start;flex:1;min-width:0">
+            <div style="width:38px;height:38px;border-radius:9px;background:rgba(16,185,129,.12);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+              <svg width="16" height="16" fill="none" stroke="var(--success)" stroke-width="2" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+            </div>
+            <div style="flex:1;min-width:0">
+              <div style="font-size:13px;font-weight:700;color:var(--text-main);margin-bottom:2px">{{a.nombre}}</div>
+              <div style="font-size:11px;color:var(--text-muted)">{{a.tipo}} · {{a.descripcion||""}}</div>
+            </div>
+          </div>
+          <span class="badge badge-success">Vigente</span>
+        </div>
+        <div style="display:flex;gap:12px;font-size:12px;color:var(--text-muted);margin-bottom:10px">
+          <span>Inicio: <strong style="color:var(--text-main)">{{a.inicio}}</strong></span>
+          <span>Fin: <strong style="color:var(--text-main)">{{a.fin}}</strong></span>
+        </div>
+        @if(getSkuNames(a.skuIds).length) {
+          <div style="margin-bottom:12px">
+            <div style="font-size:10px;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">SKUs asociados</div>
+            <div>
+              @for(n of getSkuNames(a.skuIds); track n) {
+                <span class="act-sku-pill">{{n}}</span>
+              }
+            </div>
+          </div>
+        }
+        <div style="border-top:1px solid var(--border);padding-top:10px;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">
+          <div style="display:flex;align-items:center;gap:8px">
+            <label class="switch"><input type="checkbox" checked (change)="toggleActividad(a.id, $event)"><span class="slider"></span></label>
+            <span style="font-size:12px;color:var(--text-muted)">Vigente</span>
+          </div>
+          <div style="display:flex;gap:6px">
+            <button class="btn btn-secondary btn-sm" (click)="openEditActModal(a.id)"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg> Editar</button>
+            <button class="btn btn-ghost btn-sm" style="color:var(--danger)" (click)="confirmDeleteAct(a.id)"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg></button>
+          </div>
+        </div>
+      </div>
+    }
+  </div>
+}
+
+@if(caducadas().length > 0) {
+  <div style="font-size:12px;font-weight:700;color:var(--danger);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">â— Caducadas / Inactivas ({{caducadas().length}})</div>
+  <div class="act-grid">
+    @for(a of caducadas(); track a.id) {
+      <div class="act-card" style="border-left:4px solid var(--danger)">
+        <!-- similar al de arriba pero en rojo -->
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">
+          <div style="display:flex;gap:10px;align-items:flex-start;flex:1;min-width:0">
+            <div style="width:38px;height:38px;border-radius:9px;background:rgba(239,68,68,.1);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+              <svg width="16" height="16" fill="none" stroke="var(--danger)" stroke-width="2" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+            </div>
+            <div style="flex:1;min-width:0">
+              <div style="font-size:13px;font-weight:700;color:var(--text-main);margin-bottom:2px">{{a.nombre}}</div>
+              <div style="font-size:11px;color:var(--text-muted)">{{a.tipo}} · {{a.descripcion||""}}</div>
+            </div>
+          </div>
+          <span class="badge badge-danger">Caducada</span>
+        </div>
+        <div style="display:flex;gap:12px;font-size:12px;color:var(--text-muted);margin-bottom:10px">
+          <span>Inicio: <strong style="color:var(--text-main)">{{a.inicio}}</strong></span>
+          <span>Fin: <strong style="color:var(--text-main)">{{a.fin}}</strong></span>
+        </div>
+        @if(getSkuNames(a.skuIds).length) {
+          <div style="margin-bottom:12px">
+            <div style="font-size:10px;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">SKUs asociados</div>
+            <div>
+              @for(n of getSkuNames(a.skuIds); track n) {
+                <span class="act-sku-pill">{{n}}</span>
+              }
+            </div>
+          </div>
+        }
+        <div style="border-top:1px solid var(--border);padding-top:10px;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">
+          <div style="display:flex;align-items:center;gap:8px">
+            <label class="switch"><input type="checkbox" (change)="toggleActividad(a.id, $event)"><span class="slider"></span></label>
+            <span style="font-size:12px;color:var(--text-muted)">Vigente</span>
+          </div>
+          <div style="display:flex;gap:6px">
+            <button class="btn btn-secondary btn-sm" (click)="openEditActModal(a.id)"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg> Editar</button>
+            <button class="btn btn-ghost btn-sm" style="color:var(--danger)" (click)="confirmDeleteAct(a.id)"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg></button>
+          </div>
+        </div>
+      </div>
+    }
+  </div>
+}
+
+@if(dataService.actividades().length === 0) {
+  <div class="card" style="text-align:center;padding:48px;color:var(--text-muted)">No hay actividades registradas. Crea la primera.</div>
+}
+
+@if(activeModal() === 'new_act' || activeModal() === 'edit_act') {
+<div class="modal-overlay" (click)="closeModal()">
+  <div class="modal-box" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <div class="modal-title">{{activeModal() === 'edit_act' ? 'Editar Actividad' : 'Nueva Actividad'}}</div>
+      <button class="modal-close" (click)="closeModal()">
+        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="field">
+        <label>Nombre de la Actividad *</label>
+        <input #actNombre type="text" [placeholder]="selectedAct() ? selectedAct()?.nombre : 'Ej: Promoción Fiestas Patrias'" [value]="selectedAct()?.nombre || ''">
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>Tipo *</label>
+          <select #actTipo [value]="selectedAct()?.tipo || 'Descuento'">
+            <option>Descuento</option>
+            <option>Exhibición</option>
+            <option>Mixta</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Estado Inicial</label>
+          <select #actEstado [value]="selectedAct()?.estado || 'Vigente'">
+            <option>Vigente</option>
+            <option>Caducada</option>
+          </select>
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>Fecha de Inicio *</label>
+          <input #actInicio type="date" [value]="selectedAct()?.inicio || ''">
+        </div>
+        <div class="field">
+          <label>Fecha de Fin *</label>
+          <input #actFin type="date" [value]="selectedAct()?.fin || ''">
+        </div>
+      </div>
+      <div class="field">
+        <label>SKUs participantes <span style="font-size:11px;color:var(--text-muted);font-weight:normal">(selecciona uno o varios)</span></label>
+        <div style="max-height:200px;overflow-y:auto;border:1px solid var(--border);border-radius:10px;background:var(--card-bg);">
+          @for(s of dataService.skus(); track s.id; let last = $last) {
+            <label style="display:flex;align-items:center;gap:10px;padding:12px 14px;cursor:pointer;transition:background .15s;" [style.border-bottom]="last ? 'none' : '1px solid var(--border)'">
+              <input type="checkbox" [checked]="selectedSkuIds().includes(s.id)" (change)="toggleSkuSelection(s.id, $event)" style="width:16px;height:16px;accent-color:var(--primary);cursor:pointer;">
+              <span style="font-size:14px;font-weight:500;color:var(--text-main)">{{s.nombre}}</span>
+              <span class="badge badge-info" style="font-size:10px;margin-left:4px">{{s.categoria}}</span>
+            </label>
+          }
+          @if(dataService.skus().length === 0) {
+            <div style="padding:16px;text-align:center;color:var(--text-muted);font-size:13px">No hay SKUs registrados aún.</div>
+          }
+        </div>
+      </div>
+      <div class="field">
+        <label>Descripción / Instrucciones</label>
+        <textarea #actDesc rows="2" placeholder="Detalle que verá el mercaderista en la app de campo" [value]="selectedAct()?.descripcion || ''"></textarea>
+      </div>
+      <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:24px">
+        <button class="btn btn-secondary" (click)="closeModal()">Cancelar</button>
+        <button class="btn btn-primary" (click)="saveAct(actNombre.value, actTipo.value, actEstado.value, actInicio.value, actFin.value, actDesc.value)">{{activeModal() === 'edit_act' ? 'Guardar Cambios' : 'Crear Actividad'}}</button>
+      </div>
+    </div>
+  </div>
+</div>
+}
+
+@if(activeModal() === 'delete_act') {
+<div class="modal-overlay" (click)="closeModal()">
+  <div class="modal-box narrow" (click)="$event.stopPropagation()">
+    <div class="modal-body" style="text-align:center">
+      <div style="width:56px;height:56px;border-radius:50%;background:rgba(239,68,68,.1);display:flex;align-items:center;justify-content:center;color:var(--danger);margin:0 auto 16px">
+        <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M10 11v6"/><path d="M14 11v6"/><path d="M4 7h16"/><path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2l1-12"/><path d="M9 7V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v3"/></svg>
+      </div>
+      <h3 style="font-size:18px;font-weight:700;color:var(--text-main);margin-bottom:8px">¿Eliminar actividad?</h3>
+      <p style="font-size:14px;color:var(--text-muted);margin-bottom:24px">Estás a punto de eliminar "{{selectedAct()?.nombre}}". Esta acción no se puede deshacer.</p>
+      <div style="display:flex;gap:10px">
+        <button class="btn btn-secondary" style="flex:1;justify-content:center" (click)="closeModal()">Cancelar</button>
+        <button class="btn btn-danger" style="flex:1;justify-content:center" (click)="deleteAct()">Eliminar</button>
+      </div>
+    </div>
+  </div>
+</div>
+}
+

@@ -1,0 +1,165 @@
+﻿<div class="toolbar">
+  <div class="searchbar">
+    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    <input placeholder="Buscar reporte..." [(ngModel)]="searchTerm">
+  </div>
+  <button class="btn btn-sm" [class.btn-primary]="filterPanelOpen()" [class.btn-secondary]="!filterPanelOpen()" (click)="toggleFilterPanel()">
+    <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="11" y1="18" x2="13" y2="18"/></svg>
+    Filtro
+    @if(hayFiltros()) { <span style='background:#fff;color:var(--purple);border-radius:99px;padding:0 5px;font-size:10px;font-weight:700;margin-left:2px'>â—</span> }
+  </button>
+  <button class="btn btn-secondary btn-sm" (click)="showExportModal()"><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Generar Excel</button>
+  <button class="btn btn-secondary btn-sm" (click)="dataService.showNotification('Importando desde Excel...')"><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg> Importar Excel</button>
+</div>
+
+@if(filterPanelOpen()) {
+  <div id="filter-panel" style="margin-bottom:20px;animation:fadeDown .2s ease">
+    <div style="background:var(--white);border:1px solid var(--border);border-radius:12px;box-shadow:0 4px 20px rgba(0,0,0,.08);overflow:hidden">
+      <div style="display:flex;align-items:center;gap:10px;padding:16px 24px;border-bottom:1px solid var(--border)">
+        <svg width="18" height="18" fill="none" stroke="var(--text-muted)" stroke-width="2" viewBox="0 0 24 24"><line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="11" y1="18" x2="13" y2="18"/></svg>
+        <span style="font-size:14px;font-weight:600;color:var(--text-main)">Filtro</span>
+      </div>
+      <div style="padding:20px 24px">
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:12px">
+          <div class="fp-select-wrap">
+            <label class="fp-label">STORECHECK</label>
+            <select class="fp-select" [(ngModel)]="repFiltros().storecheck">
+              <option value="">Todos</option>
+              @for(a of actividadesUnicas(); track a) { <option [value]="a">{{a}}</option> }
+            </select>
+            <span class="fp-arrow">â–¾</span>
+          </div>
+          <div class="fp-select-wrap">
+            <label class="fp-label">Controller</label>
+            <select class="fp-select" [(ngModel)]="repFiltros().controller">
+              <option value="">Todos</option>
+              @for(u of analistas(); track u.id) { <option [value]="u.name">{{u.name}}</option> }
+            </select>
+            <span class="fp-arrow">â–¾</span>
+          </div>
+          <div class="fp-select-wrap">
+            <label class="fp-label">Supervisor</label>
+            <select class="fp-select" [(ngModel)]="repFiltros().supervisor">
+              <option value="">Todos</option>
+              @for(u of supervisores(); track u.id) { <option [value]="u.name">{{u.name}}</option> }
+            </select>
+            <span class="fp-arrow">â–¾</span>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:20px">
+          <div class="fp-select-wrap">
+            <label class="fp-label">Gestor</label>
+            <select class="fp-select" [(ngModel)]="repFiltros().gestor">
+              <option value="">Todos</option>
+              @for(u of gestores(); track u.id) { <option [value]="u.name">{{u.name}}</option> }
+            </select>
+            <span class="fp-arrow">â–¾</span>
+          </div>
+          <div class="fp-date-wrap">
+            <label class="fp-date-label">Fecha de Inicio *</label>
+            <input type="date" class="fp-date-input" [(ngModel)]="repFiltros().fechaIni">
+          </div>
+          <div class="fp-date-wrap">
+            <label class="fp-date-label">Fecha de Fin *</label>
+            <input type="date" class="fp-date-input" [(ngModel)]="repFiltros().fechaFin">
+          </div>
+        </div>
+        <div style="display:flex;justify-content:flex-end;gap:12px;padding-top:16px;border-top:1px solid var(--border)">
+          <button class="btn btn-secondary" style="min-width:100px;justify-content:center" (click)="cerrarFiltro()">Cerrar</button>
+          <button class="btn" style="min-width:100px;justify-content:center;background:var(--purple);color:#fff" (click)="aplicarFiltro()">Filtrar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+}
+
+@if(hayFiltros()) {
+  <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;flex-wrap:wrap">
+    <span style="font-size:12px;color:var(--text-muted);font-weight:600">Filtros activos:</span>
+    @if(repFiltrosAplicados().storecheck) { <span class="badge badge-purple">SC: {{repFiltrosAplicados().storecheck}}</span> }
+    @if(repFiltrosAplicados().controller) { <span class="badge badge-info">Controller: {{repFiltrosAplicados().controller}}</span> }
+    @if(repFiltrosAplicados().supervisor) { <span class="badge badge-purple">Supervisor: {{repFiltrosAplicados().supervisor}}</span> }
+    @if(repFiltrosAplicados().gestor) { <span class="badge badge-success">Gestor: {{repFiltrosAplicados().gestor}}</span> }
+    @if(repFiltrosAplicados().fechaIni) { <span class="badge badge-default">Desde: {{repFiltrosAplicados().fechaIni}}</span> }
+    @if(repFiltrosAplicados().fechaFin) { <span class="badge badge-default">Hasta: {{repFiltrosAplicados().fechaFin}}</span> }
+    <button (click)="limpiarFiltros()" style="font-size:11px;color:var(--danger);background:none;border:none;cursor:pointer;font-weight:600;text-decoration:underline">âœ• Limpiar todo</button>
+  </div>
+}
+
+<div class="rep-types">
+  <div class="rep-type-card" (click)="dataService.showNotification('Generando: Storecheck General...')">
+    <div style="width:36px;height:36px;border-radius:8px;background:var(--primary)15;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--primary)"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
+    <div><div style="font-size:13px;font-weight:700;color:var(--text-main)">Storecheck General</div><div style="font-size:11px;color:var(--text-muted);margin-top:2px">Reporte completo de visitas y stock</div></div>
+  </div>
+</div>
+
+<div class="card card-0">
+  <div style="padding:16px 20px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+    <div>
+      <div style="font-size:14px;font-weight:700;color:var(--text-main)">Storechecks Registrados</div>
+      <div style="font-size:12px;color:var(--text-muted);margin-top:2px">{{dataFiltrada().length}} resultado(s)</div>
+    </div>
+    <div style="display:flex;gap:8px">
+      @if(hayFiltros()) { <button class="btn btn-secondary btn-sm" (click)="limpiarFiltros()">âœ• Limpiar filtros</button> }
+      <button class="btn btn-primary btn-sm" style="background:var(--purple)" (click)="showExportModal()">Exportar .xlsx</button>
+    </div>
+  </div>
+    <div style="overflow-x:auto; max-width:100vw; white-space:nowrap;">
+      <table style="min-width:1800px; font-size:11px;">
+        <thead>
+          <tr>
+            <th>ID REGISTRO REPORTE</th>
+            <th>REPORTE</th>
+            <th>TIPO REPORTE</th>
+            <th>ID_PDV</th>
+            <th>PDV_nombre</th>
+            <th>COD_LUCKY</th>
+            <th>ID USUARIO</th>
+            <th>GESTOR</th>
+            <th>FECHA</th>
+            <th>PUESTO DE MERCADO</th>
+            <th>Act. Promocional</th>
+            <th>PRODUCTO</th>
+            <th>STOCK INICIAL</th>
+            <th>STOCK FINAL</th>
+            <th>FOTO 1</th>
+            <th>FOTO 2</th>
+            <th>STORAGE</th>
+            <th class="td-actions">Acc.</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for(sc of dataFiltrada(); track sc.id) {
+            <tr>
+              <td class="td-muted">R-{{sc.id}}</td>
+              <td class="td-muted">STORECHECK</td>
+              <td class="td-muted">STORECHECK</td>
+              <td class="td-muted">P-{{sc.pdv}}</td>
+              <td class="td-bold">{{sc.pdv}}</td>
+              <td class="td-muted">1959</td>
+              <td class="td-muted">U-{{sc.mercaderista}}</td>
+              <td class="td-muted">{{sc.mercaderista}}</td>
+              <td class="td-muted">{{sc.fecha}}</td>
+              <td class="td-muted">{{sc.puesto||"—"}}</td>
+              <td class="td-muted">{{sc.actividad}}</td>
+              <td class="td-muted">{{sc.skus}} SKUs</td>
+              <td class="td-muted">10</td>
+              <td class="td-muted">5</td>
+              <td class="td-muted">Foto1.jpg</td>
+              <td class="td-muted">Foto2.jpg</td>
+              <td class="td-muted" style="max-width:150px;overflow:hidden;text-overflow:ellipsis">https://xplorabob...</td>
+              <td class="td-actions"><div class="td-actions-inner"><button class="btn btn-ghost btn-sm" (click)="dataService.showNotification('Exportando: ' + sc.pdv)"><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button></div></td>
+            </tr>
+          }
+        @if(dataFiltrada().length === 0) {
+          <tr><td colspan="18" class="tbl-empty" style="padding:40px">
+            <svg width="32" height="32" fill="none" stroke="var(--text-muted)" stroke-width="1.5" viewBox="0 0 24 24" style="margin-bottom:10px;opacity:.4"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <div>No se encontraron registros</div>
+            <button (click)="limpiarFiltros()" style="margin-top:10px;font-size:12px;color:var(--primary);background:none;border:none;cursor:pointer;font-weight:600">Limpiar filtros</button>
+          </td></tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</div>
+
