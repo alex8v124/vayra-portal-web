@@ -1,4 +1,4 @@
-﻿<div class="toolbar">
+<div class="toolbar">
   <div class="searchbar">
     <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
     <input placeholder="Buscar reporte..." [(ngModel)]="searchTerm">
@@ -8,7 +8,7 @@
     Filtro
     @if(hayFiltros()) { <span style='background:#fff;color:var(--purple);border-radius:99px;padding:0 5px;font-size:10px;font-weight:700;margin-left:2px'>â—</span> }
   </button>
-  <button class="btn btn-secondary btn-sm" (click)="showExportModal()"><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Generar Excel</button>
+  <button class="btn btn-secondary btn-sm" (click)="exportToExcel()"><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Generar Excel</button>
   <button class="btn btn-secondary btn-sm" (click)="dataService.showNotification('Importando desde Excel...')"><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg> Importar Excel</button>
 </div>
 
@@ -101,7 +101,7 @@
     </div>
     <div style="display:flex;gap:8px">
       @if(hayFiltros()) { <button class="btn btn-secondary btn-sm" (click)="limpiarFiltros()">âœ• Limpiar filtros</button> }
-      <button class="btn btn-primary btn-sm" style="background:var(--purple)" (click)="showExportModal()">Exportar .xlsx</button>
+      <button class="btn btn-primary btn-sm" style="background:var(--purple)" (click)="exportToExcel()">Exportar .xlsx</button>
     </div>
   </div>
     <div style="overflow-x:auto; max-width:100vw; white-space:nowrap;">

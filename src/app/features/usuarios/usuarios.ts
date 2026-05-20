@@ -11,11 +11,11 @@ import { User } from '../../core/models/user.model';
 })
 export class UsuariosComponent {
   
-  ROLE_LABELS: Record<string, string> = {admin:"Administrador",analista:"Analista",mercaderista:"Mercaderista"};
-  ROLE_COLORS: Record<string, string> = {admin:"#8B5CF6",analista:"#0EA5E9",mercaderista:"#10B981"};
+  ROLE_LABELS: Record<string, string> = {admin:"Administrador",analista:"Analista",supervisor:"Supervisor",mercaderista:"Mercaderista"};
+  ROLE_COLORS: Record<string, string> = {admin:"#8B5CF6",analista:"#0EA5E9",supervisor:"#F59E0B",mercaderista:"#10B981"};
 
   showModal = signal(false);
-  newUser: any = { name: '', email: '', role: 'mercaderista' };
+  newUser: any = { name: '', email: '', role: 'mercaderista', equipoComercial: '' };
 
   constructor(public dataService: DataService) {}
 
@@ -34,7 +34,7 @@ export class UsuariosComponent {
   }
 
   openNewUserModal() {
-    this.newUser = { name: '', email: '', role: 'mercaderista', password: '' };
+    this.newUser = { name: '', email: '', role: 'mercaderista', password: '', equipoComercial: '' };
     this.showModal.set(true);
   }
 
@@ -55,6 +55,9 @@ export class UsuariosComponent {
     
     if (this.newUser.id) {
       // Update existing user
+      if (this.newUser.role !== 'mercaderista' && this.newUser.role !== 'supervisor') {
+        this.newUser.equipoComercial = '';
+      }
       this.dataService.updateUser(this.newUser);
     } else {
       // Create new user
@@ -64,7 +67,8 @@ export class UsuariosComponent {
         email: this.newUser.email,
         role: this.newUser.role,
         password: this.newUser.password,
-        status: 'Activo'
+        status: 'Activo',
+        equipoComercial: (this.newUser.role === 'mercaderista' || this.newUser.role === 'supervisor') ? (this.newUser.equipoComercial || '') : ''
       };
       this.dataService.addUser(userToSave);
       this.dataService.showNotification('Usuario creado exitosamente');

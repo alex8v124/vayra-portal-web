@@ -21,6 +21,29 @@ export class PdvComponent {
     return this.dataService.pdvs().filter(p => p.nombre.toLowerCase().includes(term));
   });
 
+  activePlanningsToday = computed(() => {
+    const currentUser = this.auth.currentUser();
+    if (!currentUser || currentUser.role !== 'mercaderista') return [];
+    const todayStr = new Date().toLocaleDateString('sv-SE'); // YYYY-MM-DD local
+    return this.dataService.plannings().filter(p => 
+      p.usuarioId === currentUser.id && todayStr >= p.fechaInicio && todayStr <= p.fechaFin
+    );
+  });
+
+  isPdvActiveToday(pdvId: number): boolean {
+    return this.activePlanningsToday().some(p => p.pdvId === pdvId);
+  }
+
+  isPmActiveToday(pmId: number | undefined, pdvId: number): boolean {
+    if (pmId === undefined || pmId === null) return false;
+    return this.activePlanningsToday().some(p => {
+      if (p.pdvId !== pdvId) return false;
+      if (!p.pmIds) return false;
+      const ids = p.pmIds.split(',').map(Number);
+      return ids.includes(pmId);
+    });
+  }
+
   constructor(public dataService: DataService, public auth: AuthService, private router: Router) {}
 
   updateFilter(event: Event) {

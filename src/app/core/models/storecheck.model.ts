@@ -10,4 +10,5 @@ export interface Storecheck {
   actividad: string;
   observaciones: string;
   pmId?: number;
+  reporte?: string;
 }

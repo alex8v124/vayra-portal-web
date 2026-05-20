@@ -6,6 +6,8 @@ import { PDV } from '../models/pdv.model';
 import { SKU } from '../models/sku.model';
 import { Actividad } from '../models/actividad.model';
 import { Storecheck } from '../models/storecheck.model';
+import { Planning } from '../models/planning.model';
+import { EquipoComercial } from '../models/equipo-comercial.model';
 
 @Injectable({
   providedIn: 'root'
@@ -16,9 +18,12 @@ export class DataService {
   skus = signal<SKU[]>([]);
   actividades = signal<Actividad[]>([]);
   storechecks = signal<Storecheck[]>([]);
+  plannings = signal<Planning[]>([]);
+  equipos = signal<EquipoComercial[]>([]);
 
   private apiUrl = 'http://localhost:8080/api/data';
   private apiUsuarios = 'http://localhost:8080/api/usuarios';
+  private apiEquipos = 'http://localhost:8080/api/data/equipos';
 
   constructor(private http: HttpClient, @Inject(PLATFORM_ID) private platformId: Object) { 
     if (isPlatformBrowser(this.platformId)) {
@@ -27,6 +32,8 @@ export class DataService {
       this.loadSkus();
       this.loadActividades();
       this.loadStorechecks();
+      this.loadPlannings();
+      this.loadEquipos();
     }
   }
 
@@ -250,7 +257,8 @@ export class DataService {
           id: d.registroReporteId, pdv: d.pdv, puesto: d.puesto, fecha: d.fechaStr, 
           mercaderista: d.mercaderista, estado: d.estado, skus: d.skus, foto: d.foto, 
           actividad: d.actividad, observaciones: d.observaciones,
-          pmId: d.pm ? d.pm.pmId : undefined
+          pmId: d.pm ? d.pm.pmId : undefined,
+          reporte: d.reporte
         }));
         this.storechecks.set(mapped.reverse());
       }
@@ -258,7 +266,7 @@ export class DataService {
   }
 
   updateStorecheck(updated: Storecheck) {
-    const payload = { pdv: updated.pdv, puesto: updated.puesto, fechaStr: updated.fecha, mercaderista: updated.mercaderista, estado: updated.estado, skus: updated.skus, foto: updated.foto, actividad: updated.actividad, observaciones: updated.observaciones, pm: updated.pmId ? { pmId: updated.pmId } : null };
+    const payload = { pdv: updated.pdv, puesto: updated.puesto, fechaStr: updated.fecha, mercaderista: updated.mercaderista, estado: updated.estado, skus: updated.skus, foto: updated.foto, actividad: updated.actividad, observaciones: updated.observaciones, pm: updated.pmId ? { pmId: updated.pmId } : null, reporte: updated.reporte };
     this.http.put(`${this.apiUrl}/reportes/${updated.id}`, payload).subscribe({
       next: () => {
         this.storechecks.update(list => list.map(s => s.id === updated.id ? updated : s));
@@ -268,7 +276,7 @@ export class DataService {
   }
 
   addStorecheck(sc: Storecheck) {
-    const payload = { pdv: sc.pdv, puesto: sc.puesto, fechaStr: sc.fecha, mercaderista: sc.mercaderista, estado: sc.estado, skus: sc.skus, foto: sc.foto, actividad: sc.actividad, observaciones: sc.observaciones, pm: sc.pmId ? { pmId: sc.pmId } : null };
+    const payload = { pdv: sc.pdv, puesto: sc.puesto, fechaStr: sc.fecha, mercaderista: sc.mercaderista, estado: sc.estado, skus: sc.skus, foto: sc.foto, actividad: sc.actividad, observaciones: sc.observaciones, pm: sc.pmId ? { pmId: sc.pmId } : null, reporte: sc.reporte };
     this.http.post<any>(`${this.apiUrl}/reportes`, payload).subscribe({
       next: (res) => {
         sc.id = res.registroReporteId;
@@ -286,5 +294,81 @@ export class DataService {
       el.style.display = "flex";
       setTimeout(() => { el.style.display = "none" }, 3200);
     }
+  }
+
+  // ==== PLANNING ====
+  loadPlannings() {
+    this.http.get<Planning[]>(`${this.apiUrl}/plannings`).subscribe({
+      next: (data) => this.plannings.set(data),
+      error: (err) => console.error('Error fetching plannings', err)
+    });
+  }
+
+  addPlanning(planning: Planning) {
+    this.http.post<Planning>(`${this.apiUrl}/plannings`, planning).subscribe({
+      next: () => {
+        this.loadPlannings();
+        this.showNotification('Planificación creada con éxito', 'success');
+      },
+      error: () => this.showNotification('Error al crear planificación', 'error')
+    });
+  }
+
+  updatePlanning(id: number, planning: Planning) {
+    this.http.put<Planning>(`${this.apiUrl}/plannings/${id}`, planning).subscribe({
+      next: () => {
+        this.loadPlannings();
+        this.showNotification('Planificación actualizada', 'success');
+      },
+      error: () => this.showNotification('Error al actualizar planificación', 'error')
+    });
+  }
+
+  deletePlanning(id: number) {
+    this.http.delete(`${this.apiUrl}/plannings/${id}`).subscribe({
+      next: () => {
+        this.loadPlannings();
+        this.showNotification('Planificación eliminada', 'success');
+      },
+      error: () => this.showNotification('Error al eliminar planificación', 'error')
+    });
+  }
+
+  // ==== EQUIPOS COMERCIALES ====
+  loadEquipos() {
+    this.http.get<EquipoComercial[]>(this.apiEquipos).subscribe({
+      next: (data) => this.equipos.set(data),
+      error: (err) => console.error('Error fetching commercial teams', err)
+    });
+  }
+
+  addEquipo(eq: EquipoComercial) {
+    this.http.post<EquipoComercial>(this.apiEquipos, eq).subscribe({
+      next: () => {
+        this.loadEquipos();
+        this.showNotification('Equipo comercial creado con éxito', 'success');
+      },
+      error: () => this.showNotification('Error al crear equipo comercial', 'error')
+    });
+  }
+
+  updateEquipo(id: number, eq: EquipoComercial) {
+    this.http.put<EquipoComercial>(`${this.apiEquipos}/${id}`, eq).subscribe({
+      next: () => {
+        this.loadEquipos();
+        this.showNotification('Equipo comercial actualizado', 'success');
+      },
+      error: () => this.showNotification('Error al actualizar equipo comercial', 'error')
+    });
+  }
+
+  deleteEquipo(id: number) {
+    this.http.delete(`${this.apiEquipos}/${id}`).subscribe({
+      next: () => {
+        this.loadEquipos();
+        this.showNotification('Equipo comercial eliminado', 'success');
+      },
+      error: () => this.showNotification('Error al eliminar equipo comercial', 'error')
+    });
   }
 }

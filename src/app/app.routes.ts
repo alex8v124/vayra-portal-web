@@ -19,6 +19,8 @@ export const routes: Routes = [
       { path: 'reportes', loadComponent: () => import('./features/reportes/reportes').then(m => m.ReportesComponent) },
       { path: 'validaciones', loadComponent: () => import('./features/validaciones/validaciones').then(m => m.ValidacionesComponent) },
       { path: 'usuarios', loadComponent: () => import('./features/usuarios/usuarios').then(m => m.UsuariosComponent) },
+      { path: 'planning', loadComponent: () => import('./features/planning/planning').then(m => m.PlanningComponent) },
+      { path: 'equipos', loadComponent: () => import('./features/equipos/equipos').then(m => m.EquiposComercialesComponent) },
       { path: 'perfil', loadComponent: () => import('./features/profile/profile').then(m => m.ProfileComponent) }
     ]
   },

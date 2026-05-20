@@ -69,7 +69,7 @@
         <select [(ngModel)]="scForm().pdv">
           <option value="">-- Seleccionar PDV --</option>
           @for(p of pdvActivos(); track p.id) {
-            <option [value]="p.nombre">{{p.nombre}} — {{p.distrito}} ({{p.puestos.length}} puestos)</option>
+            <option [value]="p.nombre">{{p.nombre}} — {{p.distrito}} ({{p.puestos.length}} puestos){{isPdvActiveToday(p.nombre) ? ' ★ (PLANNING HOY)' : ''}}</option>
           }
         </select>
       </div>
@@ -86,7 +86,7 @@
       @if(pdvSeleccionado()?.puestos?.length) {
         <div style="max-height:280px;overflow-y:auto;margin-bottom:20px">
           @for(p of pdvSeleccionado()?.puestos; track p.num) {
-            <div class="puesto-row" [class.selected]="scForm().puestoNum === p.num" (click)="selectPuesto(p.num, p.nombre, p.pmId)">
+            <div class="puesto-row" [class.selected]="scForm().puestoNum === p.num" [class.active-today]="isPmActiveToday(p.pmId)" (click)="selectPuesto(p.num, p.nombre, p.pmId)">
               <div class="puesto-num">{{p.num}}</div>
               <div style="flex:1">
                 <div style="font-size:14px;font-weight:600;color:var(--text-main)">{{p.nombre}}</div>
@@ -116,7 +116,7 @@
       <p style="font-size:13px;color:var(--text-muted);margin:0 0 16px">Selecciona la actividad vigente que corresponde a esta visita.</p>
       <div class="sku-multiselect" style="margin-bottom:16px">
         @for(a of actVigentes(); track a.id) {
-          <div class="sku-check-item" [class.selected]="scForm().actividadId === a.id" (click)="selectActividad(a.id, a.nombre)">
+          <div class="sku-check-item" [class.selected]="scForm().actividadId === a.id" [class.active-today]="isActividadActiveToday(a.id)" (click)="selectActividad(a.id, a.nombre)">
             <div class="sku-check-box" [class.checked]="scForm().actividadId === a.id">
               @if(scForm().actividadId === a.id) {
                 <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>

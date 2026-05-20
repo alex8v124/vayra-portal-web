@@ -273,3 +273,49 @@ input:checked+.slider:before{transform:translateX(22px)}
   .login-left{display:none}
   .login-right{width:100%}
 }
+
+/* Estilos premium de iluminación para Planning Activo de Hoy */
+.pdv-card.active-today {
+  border-color: var(--purple) !important;
+  box-shadow: 0 0 16px rgba(139, 92, 246, 0.25) !important;
+  background: linear-gradient(180deg, var(--surface) 0%, rgba(139, 92, 246, 0.03) 100%) !important;
+  position: relative;
+}
+.pdv-card.active-today::before {
+  content: 'PLANNING DE HOY';
+  position: absolute;
+  top: 12px;
+  right: 120px; /* Ajustado para no chocar con el badge de Estado si lo hubiera */
+  background: var(--purple);
+  color: #fff;
+  font-size: 8px;
+  font-weight: 800;
+  padding: 3px 6px;
+  border-radius: 4px;
+  letter-spacing: 0.5px;
+  z-index: 10;
+}
+.puesto-row.active-today {
+  border-left: 4px solid var(--purple) !important;
+  background-color: rgba(139, 92, 246, 0.04) !important;
+}
+.act-card.active-today {
+  border-color: var(--purple) !important;
+  box-shadow: 0 0 16px rgba(139, 92, 246, 0.25) !important;
+  background: linear-gradient(180deg, var(--surface) 0%, rgba(139, 92, 246, 0.03) 100%) !important;
+  position: relative;
+}
+.act-card.active-today::before {
+  content: 'HOY EN TU PLANNING';
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: var(--purple);
+  color: #fff;
+  font-size: 8px;
+  font-weight: 800;
+  padding: 3px 6px;
+  border-radius: 4px;
+  letter-spacing: 0.5px;
+  z-index: 10;
+}

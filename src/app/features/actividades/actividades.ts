@@ -1,5 +1,6 @@
 import { Component, computed, signal } from '@angular/core';
 import { DataService } from '../../core/services/data.service';
+import { AuthService } from '../../core/services/auth.service';
 
 @Component({
   selector: 'app-actividades',
@@ -16,7 +17,24 @@ export class ActividadesComponent {
   selectedAct = signal<any>(null);
   selectedSkuIds = signal<number[]>([]);
 
-  constructor(public dataService: DataService) {}
+  activePlanningsToday = computed(() => {
+    const currentUser = this.auth.currentUser();
+    if (!currentUser || currentUser.role !== 'mercaderista') return [];
+    const todayStr = new Date().toLocaleDateString('sv-SE'); // YYYY-MM-DD local
+    return this.dataService.plannings().filter(p => 
+      p.usuarioId === currentUser.id && todayStr >= p.fechaInicio && todayStr <= p.fechaFin
+    );
+  });
+
+  isActividadActiveToday(actId: number): boolean {
+    return this.activePlanningsToday().some(p => {
+      if (!p.actIds) return false;
+      const ids = p.actIds.split(',').map(Number);
+      return ids.includes(actId);
+    });
+  }
+
+  constructor(public dataService: DataService, public auth: AuthService) {}
 
   getSkuNames(skuIds: number[]) {
     return skuIds.map(id => this.dataService.skus().find(s => s.id === id)?.nombre).filter(Boolean);

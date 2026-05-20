@@ -37,6 +37,39 @@ export class StorecheckComponent implements OnInit {
   
   pdvSeleccionado = computed(() => this.dataService.pdvs().find(p => p.nombre === this.scForm().pdv));
 
+  activePlanningsToday = computed(() => {
+    const currentUser = this.auth.currentUser();
+    if (!currentUser || currentUser.role !== 'mercaderista') return [];
+    const todayStr = new Date().toLocaleDateString('sv-SE'); // YYYY-MM-DD local
+    return this.dataService.plannings().filter(p => 
+      p.usuarioId === currentUser.id && todayStr >= p.fechaInicio && todayStr <= p.fechaFin
+    );
+  });
+
+  isPdvActiveToday(pdvName: string): boolean {
+    return this.activePlanningsToday().some(p => p.pdvNombre === pdvName);
+  }
+
+  isPmActiveToday(pmId: number | undefined): boolean {
+    if (pmId === undefined || pmId === null) return false;
+    const currentPdv = this.pdvSeleccionado();
+    if (!currentPdv) return false;
+    return this.activePlanningsToday().some(p => {
+      if (p.pdvId !== currentPdv.id) return false;
+      if (!p.pmIds) return false;
+      const ids = p.pmIds.split(',').map(Number);
+      return ids.includes(pmId);
+    });
+  }
+
+  isActividadActiveToday(actId: number): boolean {
+    return this.activePlanningsToday().some(p => {
+      if (!p.actIds) return false;
+      const ids = p.actIds.split(',').map(Number);
+      return ids.includes(actId);
+    });
+  }
+
   constructor(public dataService: DataService, public auth: AuthService, private route: ActivatedRoute) {}
 
   ngOnInit() {
@@ -147,7 +180,12 @@ export class StorecheckComponent implements OnInit {
       foto: true,
       actividad: f.actividad || "General",
       observaciones: f.observaciones,
-      pmId: f.pmId || undefined
+      pmId: f.pmId || undefined,
+      reporte: JSON.stringify(f.productos.map((p: any) => ({
+        nombre: p.nombre || p.skuNombre,
+        stockInicial: p.stockInicial,
+        stockFinal: p.stockFinal
+      })))
     });
     this.dataService.showNotification("Storecheck completado y guardado exitosamente");
     this.scStep.set(0);

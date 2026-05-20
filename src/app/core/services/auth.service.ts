@@ -22,6 +22,10 @@ export class AuthService {
     const u = this.currentUser();
     return u && u.roles && (u.roles.includes('ROLE_ANALISTA') || u.roles.includes('ROLE_ADMIN'));
   });
+  isSupervisor = computed(() => {
+    const u = this.currentUser();
+    return u && u.roles && (u.roles.includes('ROLE_SUPERVISOR') || u.roles.includes('ROLE_ADMIN'));
+  });
 
   private apiUrl = 'http://localhost:8080/api/auth/login';
 
