@@ -1,0 +1,91 @@
+<div class="equipos-container">
+  <div class="header">
+    <div class="title-section">
+      <h1>Equipos Comerciales</h1>
+      <p>Gestiona la estructura de los equipos comerciales y sus asignaciones en el sistema.</p>
+    </div>
+    <div class="actions">
+      <div class="search-box">
+        <svg class="search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" placeholder="Buscar equipo..." [value]="filter()" (input)="updateFilter($event)">
+      </div>
+      <button class="btn btn-primary" (click)="openNewEquipoModal()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Nuevo Equipo
+      </button>
+    </div>
+  </div>
+
+  <div class="equipos-grid">
+    @for (eq of filteredEquipos(); track eq.equipoId) {
+      <div class="equipo-card">
+        <div class="card-header">
+          <div class="team-badge-icon">
+            <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+              <circle cx="9" cy="7" r="4"/>
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+              <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+            </svg>
+          </div>
+          <div class="card-title-group">
+            <h3>{{ eq.nombre }}</h3>
+            <span class="user-count">
+              {{ dataService.users().filter(u => u.equipoComercial === eq.nombre).length }} miembros
+            </span>
+          </div>
+        </div>
+        <div class="card-body">
+          <p class="desc">{{ eq.descripcion || 'Sin descripción disponible.' }}</p>
+        </div>
+        <div class="card-actions">
+          <button class="btn btn-secondary btn-sm" (click)="editEquipo(eq)">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            Editar Equipo
+          </button>
+        </div>
+      </div>
+    } @empty {
+      <div class="empty-state">
+        <div class="empty-icon">
+          <svg width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+            <circle cx="9" cy="7" r="4"/>
+          </svg>
+        </div>
+        <h3>No se encontraron equipos</h3>
+        <p>Intenta ajustar tu búsqueda o registra un nuevo equipo comercial.</p>
+      </div>
+    }
+  </div>
+</div>
+
+<!-- Modal para Registrar/Editar Equipo -->
+@if (showModal()) {
+  <div class="modal-backdrop" (click)="closeModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>{{ currentEquipo.equipoId ? 'Editar Equipo Comercial' : 'Nuevo Equipo Comercial' }}</h2>
+        <button class="btn-close" (click)="closeModal()">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Nombre del Equipo *</label>
+          <input type="text" [(ngModel)]="currentEquipo.nombre" placeholder="Ej. Equipo Norte, Trademart Sur...">
+        </div>
+        <div class="form-group">
+          <label>Descripción</label>
+          <textarea rows="4" [(ngModel)]="currentEquipo.descripcion" placeholder="Describe brevemente el alcance de este equipo..."></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        @if (currentEquipo.equipoId) {
+          <button class="btn btn-danger" (click)="deleteEquipo(currentEquipo.equipoId)">Eliminar</button>
+        }
+        <div style="flex-grow: 1;"></div>
+        <button class="btn btn-secondary" (click)="closeModal()">Cancelar</button>
+        <button class="btn btn-primary" (click)="saveEquipo()">Guardar</button>
+      </div>
+    </div>
+  </div>
+}

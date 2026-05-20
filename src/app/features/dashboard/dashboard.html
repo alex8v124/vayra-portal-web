@@ -1,0 +1,98 @@
+﻿<div class="kpi-grid">
+  <div class="kpi-card">
+    <div><div class="kpi-label">PDVs Activos</div><div class="kpi-value">5</div><div class="kpi-sub up" style="display:flex;align-items:center;gap:4px"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="18 15 12 9 6 15"/></svg>+1 este mes</div></div>
+    <div class="kpi-icon" style="background:rgba(14,165,233,.1)"><svg width="20" height="20" fill="none" stroke="var(--primary)" stroke-width="2" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></div>
+  </div>
+  <div class="kpi-card">
+    <div><div class="kpi-label">Storechecks hoy</div><div class="kpi-value">{{compSC()}}</div><div class="kpi-sub up" style="display:flex;align-items:center;gap:4px"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="18 15 12 9 6 15"/></svg>{{compSC()}} completados · {{pendSC()}} pendientes</div></div>
+    <div class="kpi-icon" style="background:rgba(16,185,129,.1)"><svg width="20" height="20" fill="none" stroke="var(--success)" stroke-width="2" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div>
+  </div>
+  <div class="kpi-card">
+    <div><div class="kpi-label">SKUs activos</div><div class="kpi-value">{{activosSKU()}}</div><div class="kpi-sub" style="display:flex;align-items:center;gap:4px;color:var(--warning)"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="18 9 12 15 6 9"/></svg>{{inactivosSKU()}} desactivado(s)</div></div>
+    <div class="kpi-icon" style="background:rgba(139,92,246,.1)"><svg width="20" height="20" fill="none" stroke="var(--purple)" stroke-width="2" viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg></div>
+  </div>
+  <div class="kpi-card">
+    <div><div class="kpi-label">Cobertura semanal</div><div class="kpi-value">72%</div><div class="kpi-sub up" style="display:flex;align-items:center;gap:4px"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="18 15 12 9 6 15"/></svg>+5 pp vs semana anterior</div></div>
+    <div class="kpi-icon" style="background:rgba(245,158,11,.1)"><svg width="20" height="20" fill="none" stroke="var(--warning)" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></div>
+  </div>
+</div>
+
+<div class="charts-row" style="margin-bottom:16px">
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px">
+      <div>
+        <div class="chart-title">Visitas Planificadas vs Ejecutadas — Esta semana</div>
+        <div class="chart-sub">Barras: cantidad de PDVs · Línea morada: % de cobertura diaria</div>
+      </div>
+      <div style="display:flex;gap:6px">
+        <span class="badge badge-info">Lunâ€“Vie</span>
+      </div>
+    </div>
+    <canvas id="chart-cobertura" height="195"></canvas>
+  </div>
+  <div class="card" style="display:flex;flex-direction:column">
+    <div class="chart-title">Estado de Storechecks</div>
+    <div class="chart-sub">Total registrados este período</div>
+    <div style="position:relative;flex:1;display:flex;align-items:center;justify-content:center">
+      <canvas id="chart-pie" style="max-height:190px"></canvas>
+      <div style="position:absolute;text-align:center;pointer-events:none">
+        <div style="font-size:26px;font-weight:700;color:var(--text-main)">{{dataService.storechecks().length}}</div>
+        <div style="font-size:10px;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:.5px">Total</div>
+      </div>
+    </div>
+    <div class="pie-legend" style="margin-top:12px">
+      <div class="pie-legend-row"><div class="pie-dot" style="background:#10B981;border-radius:4px"></div><span style="flex:1;color:var(--text-muted);font-size:12px">Completados</span><strong style="font-size:12px">{{compSC()}}</strong></div>
+      <div class="pie-legend-row"><div class="pie-dot" style="background:#F59E0B;border-radius:4px"></div><span style="flex:1;color:var(--text-muted);font-size:12px">En Proceso</span><strong style="font-size:12px">{{dataService.storechecks().length - compSC() - pendSC()}}</strong></div>
+      <div class="pie-legend-row"><div class="pie-dot" style="background:#CBD5E1;border-radius:4px"></div><span style="flex:1;color:var(--text-muted);font-size:12px">Pendientes</span><strong style="font-size:12px">{{pendSC()}}</strong></div>
+    </div>
+  </div>
+</div>
+
+<div class="charts-row2">
+  <div class="card">
+    <div class="chart-title">Storechecks por Mercaderista</div>
+    <div class="chart-sub">Completados vs Pendientes — semana actual</div>
+    <canvas id="chart-merc" height="160"></canvas>
+  </div>
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:2px">
+      <div>
+        <div class="chart-title">Evolución de Cobertura Menúsual</div>
+        <div class="chart-sub">% real alcanzado · Línea roja: meta mínima 80%</div>
+      </div>
+    </div>
+    <canvas id="chart-trend" height="160"></canvas>
+  </div>
+</div>
+
+<div style="margin-top:16px">
+  <div class="card card-0">
+    <div style="padding:14px 20px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
+      <div style="font-size:14px;font-weight:700;color:var(--text-main)">Actividad Reciente</div>
+      <!-- Use routerLink for Vue/Angular style routing -->
+      <a href="/storecheck" class="btn btn-ghost btn-sm" style="font-size:12px;color:var(--primary);text-decoration:none">Ver todos â†’</a>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:0">
+      @for(sc of recentSC(); track sc.id) {
+        <div style="display:flex;align-items:center;gap:12px;padding:12px 20px;border-bottom:1px solid var(--border)">
+          <div style="width:34px;height:34px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0"
+               [style.background]="sc.estado==='Completado'?'rgba(16,185,129,.12)':sc.estado==='En Proceso'?'rgba(245,158,11,.12)':'rgba(148,163,184,.12)'">
+            @if(sc.estado==='Completado') {
+              <svg width="15" height="15" fill="none" stroke="#10B981" stroke-width="2.5" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+            } @else if(sc.estado==='En Proceso') {
+              <svg width="15" height="15" fill="none" stroke="#F59E0B" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            } @else {
+              <svg width="15" height="15" fill="none" stroke="#94A3B8" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/></svg>
+            }
+          </div>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:13px;font-weight:600;color:var(--text-main);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{sc.pdv}}</div>
+            <div style="font-size:11px;color:var(--text-muted);margin-top:1px">{{sc.mercaderista}} · {{sc.fecha}}</div>
+          </div>
+          <span class="badge" [class]="sc.estado==='Completado'?'badge-success':sc.estado==='En Proceso'?'badge-warning':'badge-default'">{{sc.estado}}</span>
+        </div>
+      }
+    </div>
+  </div>
+</div>
+

@@ -1,0 +1,205 @@
+<div class="planning-header" style="margin-bottom: 20px;">
+  @if(auth.currentUser()?.role === 'mercaderista') {
+    <h1 style="font-size: 24px; font-weight: 700; color: var(--text-main); margin: 0 0 4px 0;">Mis Planificaciones en Curso</h1>
+    <p style="font-size: 13px; color: var(--text-muted); margin: 0;">Consulta tus puntos de venta asignados, puestos de mercado y actividades a realizar.</p>
+  } @else {
+    <h1 style="font-size: 24px; font-weight: 700; color: var(--text-main); margin: 0 0 4px 0;">Gestión del Planning</h1>
+    <p style="font-size: 13px; color: var(--text-muted); margin: 0;">Asigna puntos de venta, puestos y actividades promocionales a tu equipo comercial.</p>
+  }
+</div>
+
+<div class="toolbar">
+  <div class="searchbar">
+    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    <input [placeholder]="auth.currentUser()?.role === 'mercaderista' ? 'Buscar por Punto de Venta (PDV)...' : 'Buscar por mercaderista o PDV...'" (input)="updateFilter($event)" [value]="filter()">
+  </div>
+  @if(auth.isSupervisor() || auth.isAdmin()) {
+    <button class="btn btn-primary btn-sm" (click)="openNewPlanningModal()">
+      <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Nuevo Planning
+    </button>
+  }
+</div>
+
+<div class="planning-grid">
+  @for(p of filteredPlannings(); track p.planningId) {
+    <div class="planning-card">
+      <div class="card-header">
+        <div class="header-main">
+          <div class="card-icon">
+            <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 4H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zM5 20V8h14v12H5zm7-10H7v2h5v-2zm0 4H7v2h5v-2zm5-4h-3v2h3v-2zm0 4h-3v2h3v-2z"/></svg>
+          </div>
+          <div>
+            <div class="pdv-name">{{p.pdvNombre}}</div>
+            <div class="merc-name" style="display:flex; align-items:center; gap:6px; flex-wrap:wrap">
+              Mercaderista: {{p.mercaderistaName}} 
+              <span class="badge team-badge">{{getMercTeam(p.usuarioId)}}</span>
+            </div>
+          </div>
+        </div>
+        <div class="header-actions">
+          <span class="badge" [class]="p.estado==='Completado'?'badge-success':'badge-warning'">{{p.estado}}</span>
+          @if(auth.isSupervisor() || auth.isAdmin()) {
+            <button class="btn btn-ghost btn-sm" (click)="openEditPlanningModal(p)" title="Editar Planning">
+              <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            </button>
+            <button class="btn btn-ghost btn-sm btn-delete" (click)="deletePlanning(p.planningId!)" title="Eliminar Planning">
+              <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+            </button>
+          }
+        </div>
+      </div>
+
+      <div class="card-body">
+        <div class="date-range">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          <span>{{p.fechaInicio}} al {{p.fechaFin}}</span>
+        </div>
+
+        <div class="assigned-list">
+          <div class="assigned-title">Puestos Asignados:</div>
+          <div class="assigned-content">{{getPmNames(p.pmIds)}}</div>
+        </div>
+
+        <div class="assigned-list">
+          <div class="assigned-title">Actividades a realizar:</div>
+          <div class="assigned-content">{{getActNames(p.actIds)}}</div>
+        </div>
+      </div>
+    </div>
+  } @empty {
+    <div class="empty-state">
+      <svg width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M19 4H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zM5 20V8h14v12H5zm7-10H7v2h5v-2zm0 4H7v2h5v-2zm5-4h-3v2h3v-2zm0 4h-3v2h3v-2z"/></svg>
+      <h3>No hay planificaciones registradas</h3>
+      @if(auth.currentUser()?.role === 'mercaderista') {
+        <p>No tienes planificaciones asignadas de momento.</p>
+      } @else {
+        <p>Comienza creando una nueva asignación para los mercaderistas.</p>
+      }
+    </div>
+  }
+</div>
+
+<!-- Modal de Formulario Planning -->
+@if(activeModal() !== 'none') {
+  <div class="modal-backdrop">
+    <div class="modal-card premium-modal">
+      <div class="modal-header">
+        <div style="display:flex; flex-direction:column; gap:4px">
+          <h2 style="font-size: 18px; font-weight: 700; color: var(--text-main)">{{activeModal() === 'edit_planning' ? 'Editar' : 'Crear'}} Planning</h2>
+          @if(auth.currentUser()?.equipoComercial) {
+            <span class="team-header-badge">Mi Equipo: {{auth.currentUser()?.equipoComercial}}</span>
+          }
+        </div>
+        <button class="btn btn-ghost btn-sm" (click)="closeModal()">
+          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+
+      <div class="modal-body font-sans premium-body">
+        <!-- Fila superior: Grid de 4 columnas para Inputs de Selección y Fechas -->
+        <div class="planning-form-top-grid">
+          <div class="form-group">
+            <label>Mercaderista</label>
+            <div class="select-wrapper">
+              <svg class="select-icon" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              <select [value]="formMercaderistaId()" (change)="formMercaderistaId.set(+$any($event.target).value)">
+                <option value="0">Seleccionar mercaderista...</option>
+                @for(m of mercaderistas(); track m.id) {
+                  <option [value]="m.id">{{m.name}} ({{m.equipoComercial || 'Sin equipo'}})</option>
+                }
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Punto de Venta (PDV)</label>
+            <div class="select-wrapper">
+              <svg class="select-icon" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+              <select [value]="formPdvId()" (change)="onPdvChange($event)">
+                <option value="0">Seleccionar PDV...</option>
+                @for(pdv of dataService.pdvs(); track pdv.id) {
+                  <option [value]="pdv.id">{{pdv.nombre}}</option>
+                }
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Fecha de Inicio</label>
+            <div class="input-wrapper">
+              <input type="date" [value]="formFechaInicio()" (input)="formFechaInicio.set($any($event.target).value)">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Fecha Fin</label>
+            <div class="input-wrapper">
+              <input type="date" [value]="formFechaFin()" (input)="formFechaFin.set($any($event.target).value)">
+            </div>
+          </div>
+        </div>
+
+        <!-- Fila inferior: Grid de 2 columnas para Selección de PMs y Actividades -->
+        <div class="planning-form-bottom-columns">
+          <!-- Columna Izquierda: Puestos de Mercado -->
+          <div class="form-group column-item">
+            <label>Puestos de Mercado (PMs)</label>
+            @if(formPdvId() > 0) {
+              <div class="checkbox-list premium-list">
+                @for(pm of availablePms(); track pm.pmId) {
+                  <div class="checkbox-item" [class.selected]="isPmSelected(pm.pmId)" (click)="togglePmSelection(pm.pmId)">
+                    <div class="check-box">
+                      @if(isPmSelected(pm.pmId)) {
+                        <svg width="12" height="12" fill="none" stroke="#fff" stroke-width="3" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+                      }
+                    </div>
+                    <div class="item-details">
+                      <span class="item-name">{{pm.nombre}}</span>
+                      <span class="item-sub">Código: {{pm.num}}</span>
+                    </div>
+                  </div>
+                } @empty {
+                  <div class="list-empty-state">
+                    <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                    <span>Este PDV no tiene puestos registrados.</span>
+                  </div>
+                }
+              </div>
+            } @else {
+              <div class="select-pdv-placeholder">
+                <svg width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                <span>Selecciona un Punto de Venta para listar sus puestos.</span>
+              </div>
+            }
+          </div>
+
+          <!-- Columna Derecha: Actividades Promocionales -->
+          <div class="form-group column-item">
+            <label>Actividades Promocionales</label>
+            <div class="checkbox-list premium-list">
+              @for(act of availableActividades(); track act.id) {
+                <div class="checkbox-item" [class.selected]="isActSelected(act.id)" (click)="toggleActSelection(act.id)">
+                  <div class="check-box">
+                    @if(isActSelected(act.id)) {
+                      <svg width="12" height="12" fill="none" stroke="#fff" stroke-width="3" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+                    }
+                  </div>
+                  <div class="item-details">
+                    <span class="item-name">{{act.nombre}}</span>
+                    <span class="item-sub">{{act.tipo}} · Del {{act.inicio}} al {{act.fin}}</span>
+                  </div>
+                </div>
+              }
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-secondary" (click)="closeModal()">Cancelar</button>
+        <button class="btn btn-primary" (click)="savePlanning()">Guardar Asignación</button>
+      </div>
+    </div>
+  </div>
+}

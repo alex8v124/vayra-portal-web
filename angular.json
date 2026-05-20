@@ -3,11 +3,11 @@
   "version": 1,
   "cli": {
     "packageManager": "npm",
-    "analytics": "3ddd4658-e1ec-40cf-b99c-12e84c8f1d96"
+    "analytics": "f665691f-3512-4942-b6e5-8c65d832a0b6"
   },
   "newProjectRoot": "projects",
   "projects": {
-    "xplora-login": {
+    "xplora-portal-web": {
       "projectType": "application",
       "schematics": {},
       "root": "",
@@ -65,10 +65,10 @@
           "builder": "@angular/build:dev-server",
           "configurations": {
             "production": {
-              "buildTarget": "xplora-login:build:production"
+              "buildTarget": "xplora-portal-web:build:production"
             },
             "development": {
-              "buildTarget": "xplora-login:build:development"
+              "buildTarget": "xplora-portal-web:build:development"
             }
           },
           "defaultConfiguration": "development"
