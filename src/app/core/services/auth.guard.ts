@@ -17,8 +17,24 @@ export const authGuard: CanActivateFn = (route, state) => {
   if (authService.isLoggedIn()) {
     const isDashboard = state.url.includes('/dashboard');
     if (isDashboard && !authService.isAnalista()) {
+      if (authService.isSupervisor()) {
+        return router.parseUrl('/planning');
+      } else {
+        return router.parseUrl('/pdv');
+      }
+    }
+    
+    const isPlanning = state.url.includes('/planning');
+    const userRole = authService.currentUser()?.role;
+    if (isPlanning && !authService.isSupervisor() && userRole !== 'mercaderista') {
       return router.parseUrl('/pdv');
     }
+    
+    const isEquipos = state.url.includes('/equipos');
+    if (isEquipos && !authService.isAdmin()) {
+      return router.parseUrl('/pdv');
+    }
+    
     return true;
   }
   

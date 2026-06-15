@@ -1,4 +1,5 @@
-import { Component, AfterViewInit, computed, OnDestroy } from '@angular/core';
+import { Component, AfterViewInit, computed, OnDestroy, Inject, PLATFORM_ID } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { DataService } from '../../core/services/data.service';
 
 declare const Chart: any;
@@ -19,10 +20,15 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
   
   recentSC = computed(() => this.dataService.storechecks().slice(0, 4));
 
-  constructor(public dataService: DataService) {}
+  constructor(
+    public dataService: DataService,
+    @Inject(PLATFORM_ID) private platformId: Object
+  ) {}
 
   ngAfterViewInit() {
-    this.initDashboardCharts();
+    if (isPlatformBrowser(this.platformId)) {
+      this.initDashboardCharts();
+    }
   }
 
   ngOnDestroy() {

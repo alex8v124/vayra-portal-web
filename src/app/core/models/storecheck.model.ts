@@ -9,5 +9,7 @@ export interface Storecheck {
   foto: boolean;
   actividad: string;
   observaciones: string;
+  reporte?: string;
   pmId?: number;
+  fotos?: string | null;
 }

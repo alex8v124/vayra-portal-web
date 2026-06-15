@@ -1,4 +1,4 @@
-import { Component, computed, signal, OnInit } from '@angular/core';
+import { Component, computed, signal, OnInit, ViewChild, ElementRef } from '@angular/core';
 import { DataService } from '../../core/services/data.service';
 import { AuthService } from '../../core/services/auth.service';
 import { FormsModule } from '@angular/forms';
@@ -24,8 +24,16 @@ export class StorecheckComponent implements OnInit {
     actividad: "",
     actividadId: null,
     observaciones: "",
-    productos: []
+    productos: [],
+    fotos: []
   });
+
+  isCameraOpen = signal(false);
+  capturedPhoto = signal<string | null>(null);
+  stream = signal<MediaStream | null>(null);
+
+  @ViewChild('videoElement', { static: false }) videoElement!: ElementRef<HTMLVideoElement>;
+  @ViewChild('canvasElement', { static: false }) canvasElement!: ElementRef<HTMLCanvasElement>;
 
   filteredSCs = computed(() => {
     const term = this.filter().toLowerCase();
@@ -36,6 +44,39 @@ export class StorecheckComponent implements OnInit {
   pdvActivos = computed(() => this.dataService.pdvs().filter(p => p.estado === "Activo"));
   
   pdvSeleccionado = computed(() => this.dataService.pdvs().find(p => p.nombre === this.scForm().pdv));
+
+  activePlanningsToday = computed(() => {
+    const currentUser = this.auth.currentUser();
+    if (!currentUser || currentUser.role !== 'mercaderista') return [];
+    const todayStr = new Date().toLocaleDateString('sv-SE'); // YYYY-MM-DD local
+    return this.dataService.plannings().filter(p => 
+      p.usuarioId === currentUser.id && todayStr >= p.fechaInicio && todayStr <= p.fechaFin
+    );
+  });
+
+  isPdvActiveToday(pdvName: string): boolean {
+    return this.activePlanningsToday().some(p => p.pdvNombre === pdvName);
+  }
+
+  isPmActiveToday(pmId: number | undefined): boolean {
+    if (pmId === undefined || pmId === null) return false;
+    const currentPdv = this.pdvSeleccionado();
+    if (!currentPdv) return false;
+    return this.activePlanningsToday().some(p => {
+      if (p.pdvId !== currentPdv.id) return false;
+      if (!p.pmIds) return false;
+      const ids = p.pmIds.split(',').map(Number);
+      return ids.includes(pmId);
+    });
+  }
+
+  isActividadActiveToday(actId: number): boolean {
+    return this.activePlanningsToday().some(p => {
+      if (!p.actIds) return false;
+      const ids = p.actIds.split(',').map(Number);
+      return ids.includes(actId);
+    });
+  }
 
   constructor(public dataService: DataService, public auth: AuthService, private route: ActivatedRoute) {}
 
@@ -65,6 +106,8 @@ export class StorecheckComponent implements OnInit {
 
   cancelSC() {
     this.scStep.set(0);
+    this.closeCamera();
+    this.capturedPhoto.set(null);
   }
 
   nextStep() {
@@ -132,6 +175,54 @@ export class StorecheckComponent implements OnInit {
     this.nextStep();
   }
 
+  async openCamera() {
+    try {
+      const mediaStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+      this.stream.set(mediaStream);
+      this.isCameraOpen.set(true);
+      setTimeout(() => {
+        if (this.videoElement && this.videoElement.nativeElement) {
+          this.videoElement.nativeElement.srcObject = mediaStream;
+          this.videoElement.nativeElement.play().catch(e => console.error(e));
+        }
+      }, 100);
+    } catch (error) {
+      this.dataService.showNotification("Error al acceder a la cámara. Revisa los permisos.", "error");
+    }
+  }
+
+  capturePhoto() {
+    if (this.videoElement && this.canvasElement) {
+      const video = this.videoElement.nativeElement;
+      const canvas = this.canvasElement.nativeElement;
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+        this.capturedPhoto.set(dataUrl);
+        this.scForm.update(f => ({...f, fotos: [dataUrl]}));
+        this.closeCamera();
+      }
+    }
+  }
+
+  closeCamera() {
+    const s = this.stream();
+    if (s) {
+      s.getTracks().forEach(track => track.stop());
+      this.stream.set(null);
+    }
+    this.isCameraOpen.set(false);
+  }
+
+  retakePhoto() {
+    this.capturedPhoto.set(null);
+    this.scForm.update(f => ({...f, fotos: []}));
+    this.openCamera();
+  }
+
   completeSC() {
     const f = this.scForm();
     const isMercaderista = this.auth.currentUser()?.role === 'mercaderista';
@@ -147,9 +238,16 @@ export class StorecheckComponent implements OnInit {
       foto: true,
       actividad: f.actividad || "General",
       observaciones: f.observaciones,
-      pmId: f.pmId || undefined
+      pmId: f.pmId || undefined,
+      fotos: f.fotos && f.fotos.length > 0 ? JSON.stringify(f.fotos) : null,
+      reporte: JSON.stringify(f.productos.map((p: any) => ({
+        nombre: p.nombre || p.skuNombre,
+        stockInicial: p.stockInicial,
+        stockFinal: p.stockFinal
+      })))
     });
     this.dataService.showNotification("Storecheck completado y guardado exitosamente");
+    this.capturedPhoto.set(null);
     this.scStep.set(0);
   }
 

@@ -8,7 +8,7 @@ import { RouterLink } from '@angular/router';
     <div class="landing-page">
       <nav class="landing-nav">
         <div class="landing-logo">
-          <img src="logo-xplora-cn-nombre.png" alt="Xplora" height="32" style="object-fit: contain;">
+          <img src="logo-xplora-cn-nombre.png" alt="Vayra" height="32" style="object-fit: contain;">
         </div>
         <div class="landing-actions">
           <a routerLink="/login" class="btn btn-secondary">Iniciar Sesión</a>

@@ -21,6 +21,29 @@ export class PdvComponent {
     return this.dataService.pdvs().filter(p => p.nombre.toLowerCase().includes(term));
   });
 
+  activePlanningsToday = computed(() => {
+    const currentUser = this.auth.currentUser();
+    if (!currentUser || currentUser.role !== 'mercaderista') return [];
+    const todayStr = new Date().toLocaleDateString('sv-SE'); // YYYY-MM-DD local
+    return this.dataService.plannings().filter(p => 
+      p.usuarioId === currentUser.id && todayStr >= p.fechaInicio && todayStr <= p.fechaFin
+    );
+  });
+
+  isPdvActiveToday(pdvId: number): boolean {
+    return this.activePlanningsToday().some(p => p.pdvId === pdvId);
+  }
+
+  isPmActiveToday(pmId: number | undefined, pdvId: number): boolean {
+    if (pmId === undefined || pmId === null) return false;
+    return this.activePlanningsToday().some(p => {
+      if (p.pdvId !== pdvId) return false;
+      if (!p.pmIds) return false;
+      const ids = p.pmIds.split(',').map(Number);
+      return ids.includes(pmId);
+    });
+  }
+
   constructor(public dataService: DataService, public auth: AuthService, private router: Router) {}
 
   updateFilter(event: Event) {
@@ -39,15 +62,16 @@ export class PdvComponent {
     this.activeModal.set('new_pdv');
   }
 
-  saveNewPDV(nombre: string, codigo: string, distrito: string, tipo: string, mercaderista: string) {
-    if (!nombre || !codigo) {
-      this.dataService.showNotification('Nombre y código son obligatorios', 'error');
+  saveNewPDV(nombre: string, codigo: string, distrito: string, tipo: string) {
+    if (!nombre || !codigo || !distrito || !tipo) {
+      this.dataService.showNotification('Complete los campos obligatorios.', 'error');
       return;
     }
-    this.dataService.addPDV({
+    const newPDV = {
       id: 0, nombre, codigo, distrito, tipo,
-      estado: 'Activo', mercaderista, visitas: 0, pendiente: true, puestos: []
-    });
+      estado: 'Activo' as const, visitas: 0, pendiente: true, puestos: []
+    };
+    this.dataService.addPDV(newPDV);
     this.closeModal();
   }
 
@@ -59,16 +83,18 @@ export class PdvComponent {
     }
   }
 
-  saveEditPDV(nombre: string, codigo: string, distrito: string, tipo: string, mercaderista: string, estado: string) {
-    if (!nombre || !codigo) {
-      this.dataService.showNotification('Nombre y código son obligatorios', 'error');
+  saveEditPDV(nombre: string, codigo: string, distrito: string, tipo: string, estado: string) {
+    if (!nombre || !codigo || !distrito || !tipo) {
+      this.dataService.showNotification('Complete los campos obligatorios.', 'error');
       return;
     }
     const pdv = this.selectedPdv();
-    this.dataService.updatePDV({
-      ...pdv, nombre, codigo, distrito, tipo, mercaderista, estado
-    });
-    this.closeModal();
+    if (pdv) {
+      this.dataService.updatePDV({
+        ...pdv, nombre, codigo, distrito, tipo, estado: estado as 'Activo'|'Inactivo'
+      });
+      this.closeModal();
+    }
   }
 
   // ── PUESTOS CRUD (con múltiples actividades) ──
