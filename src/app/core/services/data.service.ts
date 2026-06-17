@@ -279,7 +279,8 @@ export class DataService {
           mercaderista: d.mercaderista, estado: d.estado, skus: d.skus, foto: d.foto, 
           actividad: d.actividad, observaciones: d.observaciones,
           pmId: d.pm ? d.pm.pmId : undefined,
-          reporte: d.reporte
+          reporte: d.reporte,
+          fotos: d.fotos ? JSON.parse(d.fotos) : null
         }));
         this.storechecks.set(mapped.reverse());
       }

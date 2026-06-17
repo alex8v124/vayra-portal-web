@@ -1,0 +1,125 @@
+<div class="toolbar" style="justify-content:space-between;">
+  <div>
+    <h2 class="chart-title" style="font-size:24px;">Gestión de Cronogramas</h2>
+    <p class="chart-sub">Configura y administra los cronogramas de mercados para el cruce de información en los Storechecks.</p>
+  </div>
+  <button class="btn btn-primary" (click)="abrirModalNuevo()">
+    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+    Nuevo Cronograma
+  </button>
+</div>
+
+<div class="card card-0">
+  <div class="tbl-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Nombre del Cronograma</th>
+          <th>Mercados Registrados</th>
+          <th style="text-align:right">Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for(crono of cronogramas; track crono.id) {
+          <tr>
+            <td class="td-bold td-muted">#{{crono.id}}</td>
+            <td class="td-bold">{{crono.nombre}}</td>
+            <td>
+              <span class="badge badge-purple">
+                @if(crono.datosJson) {
+                  {{ getCantidadMercados(crono.datosJson) }} mercados
+                } @else {
+                  0 mercados
+                }
+              </span>
+            </td>
+            <td class="td-actions">
+              <div class="td-actions-inner">
+                <button class="btn btn-sm btn-secondary" (click)="editarCronograma(crono)">
+                  <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                  Editar
+                </button>
+                <button class="btn btn-sm btn-danger" (click)="eliminarCronograma(crono.id!)" style="padding:6px">
+                  <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                </button>
+              </div>
+            </td>
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="4">
+              <div class="tbl-empty">No hay cronogramas registrados. Crea uno nuevo para comenzar.</div>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</div>
+
+@if(showModal) {
+  <div class="modal-overlay">
+    <div class="modal-box wide">
+      <div class="modal-header">
+        <h3 class="modal-title">{{editingId ? 'Editar Cronograma' : 'Nuevo Cronograma'}}</h3>
+        <button type="button" class="modal-close" (click)="cerrarModal()">
+          <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      
+      <div class="modal-body">
+        <form [formGroup]="form">
+          <div class="field">
+            <label>Nombre del Cronograma</label>
+            <input type="text" formControlName="nombre" placeholder="Ej: Cronograma Julio 2024">
+            <div class="field-hint">Un nombre descriptivo para identificarlo luego en el procesador.</div>
+          </div>
+
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-top:32px; margin-bottom:16px;">
+            <div>
+              <h4 style="font-size:15px; font-weight:700; color:var(--text-main)">Mercados del Cronograma</h4>
+              <p style="font-size:13px; color:var(--text-muted)">Agrega las filas tal cual vienen de tu matriz base.</p>
+            </div>
+            <button type="button" class="btn btn-sm btn-secondary" (click)="agregarFila()">
+              <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+              Añadir Fila
+            </button>
+          </div>
+
+          <div formArrayName="filas" style="max-height: 350px; overflow-y:auto; border:1px solid var(--border); border-radius:12px; padding:16px; background:var(--surface-hover);">
+            @for(fila of filas.controls; track $index) {
+              <div class="field-row3" [formGroupName]="$index" style="align-items:flex-end; margin-bottom:12px; padding-bottom:12px; border-bottom:1px solid rgba(0,0,0,0.05);">
+                <div class="field" style="margin-bottom:0">
+                  <label>Ciudad</label>
+                  <input type="text" formControlName="Ciudad" placeholder="Ej: LIMA">
+                </div>
+                <div class="field" style="margin-bottom:0">
+                  <label>MERCADO</label>
+                  <input type="text" formControlName="MERCADO" placeholder="Ej: ASOC. MERCADO CENTRAL">
+                </div>
+                <div class="field" style="margin-bottom:0; display:flex; gap:12px;">
+                  <div style="flex:1">
+                    <label>DEX</label>
+                    <input type="text" formControlName="DEX" placeholder="Ej: ALICORP">
+                  </div>
+                  <button type="button" class="btn btn-danger" style="padding:12px; margin-top:25px;" (click)="eliminarFila($index)">
+                    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                  </button>
+                </div>
+              </div>
+            }
+            @if(filas.length === 0) {
+              <div style="text-align:center; color:var(--text-muted); padding:20px; font-size:14px;">No has agregado ningún mercado todavía.</div>
+            }
+          </div>
+
+          <div style="display:flex; justify-content:flex-end; gap:12px; margin-top:32px;">
+            <button type="button" class="btn btn-ghost" (click)="cerrarModal()">Cancelar</button>
+            <button type="button" class="btn btn-primary" (click)="guardar()">Guardar Cronograma</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+}

@@ -29,7 +29,9 @@ export class StorecheckComponent implements OnInit {
   });
 
   isCameraOpen = signal(false);
-  capturedPhoto = signal<string | null>(null);
+  currentCaptureType = signal<'pdv' | 'puesto' | null>(null);
+  capturedPhotoPDV = signal<string | null>(null);
+  capturedPhotoPuesto = signal<string | null>(null);
   stream = signal<MediaStream | null>(null);
 
   @ViewChild('videoElement', { static: false }) videoElement!: ElementRef<HTMLVideoElement>;
@@ -85,9 +87,15 @@ export class StorecheckComponent implements OnInit {
       if (params['pdvName']) {
         this.scForm.set({
           pdv: params['pdvName'], puestoNum: "", puestoNombre: "", pmId: null, actividad: "", actividadId: null, observaciones: "",
-          productos: []
+          productos: [], fotos: []
         });
-        this.scStep.set(2);
+        
+        if (params['autoCamera'] === 'pdv') {
+          this.scStep.set(1);
+          setTimeout(() => this.openCamera('pdv'), 500);
+        } else {
+          this.scStep.set(1);
+        }
       }
     });
   }
@@ -107,7 +115,8 @@ export class StorecheckComponent implements OnInit {
   cancelSC() {
     this.scStep.set(0);
     this.closeCamera();
-    this.capturedPhoto.set(null);
+    this.capturedPhotoPDV.set(null);
+    this.capturedPhotoPuesto.set(null);
   }
 
   nextStep() {
@@ -175,8 +184,9 @@ export class StorecheckComponent implements OnInit {
     this.nextStep();
   }
 
-  async openCamera() {
+  async openCamera(type: 'pdv' | 'puesto') {
     try {
+      this.currentCaptureType.set(type);
       const mediaStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
       this.stream.set(mediaStream);
       this.isCameraOpen.set(true);
@@ -201,8 +211,16 @@ export class StorecheckComponent implements OnInit {
       if (ctx) {
         ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
         const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
-        this.capturedPhoto.set(dataUrl);
-        this.scForm.update(f => ({...f, fotos: [dataUrl]}));
+        const type = this.currentCaptureType();
+        if (type === 'pdv') {
+          this.capturedPhotoPDV.set(dataUrl);
+        } else {
+          this.capturedPhotoPuesto.set(dataUrl);
+        }
+        
+        const fotos = [this.capturedPhotoPDV() || '', this.capturedPhotoPuesto() || ''].filter(Boolean);
+        this.scForm.update(f => ({...f, fotos: fotos}));
+        
         this.closeCamera();
       }
     }
@@ -215,12 +233,18 @@ export class StorecheckComponent implements OnInit {
       this.stream.set(null);
     }
     this.isCameraOpen.set(false);
+    this.currentCaptureType.set(null);
   }
 
-  retakePhoto() {
-    this.capturedPhoto.set(null);
-    this.scForm.update(f => ({...f, fotos: []}));
-    this.openCamera();
+  retakePhoto(type: 'pdv' | 'puesto') {
+    if (type === 'pdv') {
+      this.capturedPhotoPDV.set(null);
+    } else {
+      this.capturedPhotoPuesto.set(null);
+    }
+    const fotos = [this.capturedPhotoPDV() || '', this.capturedPhotoPuesto() || ''].filter(Boolean);
+    this.scForm.update(f => ({...f, fotos: fotos}));
+    this.openCamera(type);
   }
 
   completeSC() {
@@ -247,7 +271,8 @@ export class StorecheckComponent implements OnInit {
       })))
     });
     this.dataService.showNotification("Storecheck completado y guardado exitosamente");
-    this.capturedPhoto.set(null);
+    this.capturedPhotoPDV.set(null);
+    this.capturedPhotoPuesto.set(null);
     this.scStep.set(0);
   }
 

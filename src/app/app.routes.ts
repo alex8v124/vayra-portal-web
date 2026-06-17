@@ -21,7 +21,9 @@ export const routes: Routes = [
       { path: 'usuarios', loadComponent: () => import('./features/usuarios/usuarios').then(m => m.UsuariosComponent) },
       { path: 'planning', loadComponent: () => import('./features/planning/planning').then(m => m.PlanningComponent) },
       { path: 'equipos', loadComponent: () => import('./features/equipos/equipos').then(m => m.EquiposComercialesComponent) },
-      { path: 'perfil', loadComponent: () => import('./features/profile/profile').then(m => m.ProfileComponent) }
+      { path: 'perfil', loadComponent: () => import('./features/profile/profile').then(m => m.ProfileComponent) },
+      { path: 'cronogramas', loadComponent: () => import('./features/cronogramas/cronogramas').then(m => m.CronogramasComponent) },
+      { path: 'procesar-storecheck', loadComponent: () => import('./features/storecheck-processor/storecheck-processor').then(m => m.StorecheckProcessorComponent) }
     ]
   },
   { path: 'unauthorized', loadComponent: () => import('./features/errors/unauthorized/unauthorized').then(m => m.UnauthorizedComponent) },

@@ -187,7 +187,7 @@ export class PdvComponent {
 
   confirmVisit() {
     this.dataService.showNotification('Visita iniciada — redirigiendo a storecheck');
-    this.router.navigate(['/storecheck'], { queryParams: { pdvId: this.selectedPdv().id, pdvName: this.selectedPdv().nombre } });
+    this.router.navigate(['/storecheck'], { queryParams: { pdvId: this.selectedPdv().id, pdvName: this.selectedPdv().nombre, autoCamera: 'pdv' } });
     this.closeModal();
   }
 }

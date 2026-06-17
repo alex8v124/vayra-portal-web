@@ -1,11 +1,14 @@
 import { Component, computed, signal } from '@angular/core';
 import { DataService } from '../../core/services/data.service';
+import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import * as XLSX from 'xlsx';
 
 @Component({
   selector: 'app-reportes',
-  imports: [FormsModule],
+  standalone: true,
+  imports: [CommonModule, FormsModule, RouterLink],
   templateUrl: './reportes.html',
   styleUrl: './reportes.css'
 })
@@ -82,14 +85,14 @@ export class ReportesComponent {
           'REPORTE': 'STORECHECK',
           'TIPO REPORTE': 'STORECHECK',
           'ID_PDV': `P-${sc.pdv}`,
-          'PDV NOMBRE': sc.pdv,
+          'PDV_nombre': sc.pdv,
           'COD_LUCKY': '1959',
           'ID GESTOR': `U-${sc.mercaderista}`,
           'GESTOR': sc.mercaderista,
           'FECHA': sc.fecha,
           'PUESTO DE MERCADO': sc.puesto || '—',
-          'ACTIVIDAD PROMOCIONAL': sc.actividad || 'Ninguna',
-          'PRODUCTO / SKU': p.nombre || '—',
+          'Act. Promocional': sc.actividad || 'Ninguna',
+          'PRODUCTO': p.nombre || '—',
           'STOCK INICIAL': p.stockInicial ?? 0,
           'STOCK FINAL': p.stockFinal ?? 0,
           'VENTAS (DIFERENCIA)': (+p.stockInicial || 0) - (+p.stockFinal || 0),
@@ -108,14 +111,14 @@ export class ReportesComponent {
           'REPORTE': 'STORECHECK',
           'TIPO REPORTE': 'STORECHECK',
           'ID_PDV': `P-${sc.pdv}`,
-          'PDV NOMBRE': sc.pdv,
+          'PDV_nombre': sc.pdv,
           'COD_LUCKY': '1959',
           'ID GESTOR': `U-${sc.mercaderista}`,
           'GESTOR': sc.mercaderista,
           'FECHA': sc.fecha,
           'PUESTO DE MERCADO': sc.puesto || '—',
-          'ACTIVIDAD PROMOCIONAL': sc.actividad || 'Ninguna',
-          'PRODUCTO / SKU': p.nombre,
+          'Act. Promocional': sc.actividad || 'Ninguna',
+          'PRODUCTO': p.nombre,
           'STOCK INICIAL': p.stockInicial,
           'STOCK FINAL': p.stockFinal,
           'VENTAS (DIFERENCIA)': p.stockInicial - p.stockFinal,

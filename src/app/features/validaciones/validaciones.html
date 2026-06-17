@@ -117,13 +117,21 @@
 
       <!-- Foto de Evidencia -->
       <div>
-        <span style="font-size:11px;color:var(--text-muted);display:block;margin-bottom:6px;">Foto de Evidencia</span>
-        @if(selectedStorecheck()?.foto) {
-          <div style="position:relative; width:100%; height:280px; border-radius:8px; overflow:hidden; border:1px solid var(--border); display:flex; align-items:center; justify-content:center; background:#111;">
-            <img src="https://images.unsplash.com/photo-1542838132-92c53300491e?w=800" alt="Evidencia de góndola" style="width:100%; height:100%; object-fit:cover;">
-            <div style="position:absolute; bottom:12px; right:12px; background:rgba(0,0,0,0.85); padding:6px 12px; border-radius:4px; font-size:11px; color:#fff; font-weight:600; backdrop-filter:blur(4px);">
-              FOTO DE EVIDENCIA ADJUNTADA
-            </div>
+        <span style="font-size:11px;color:var(--text-muted);display:block;margin-bottom:6px;">Evidencia Fotográfica</span>
+        @if(selectedStorecheck()?.fotos && selectedStorecheck()?.fotos?.length) {
+          <div style="display:flex;gap:12px;overflow-x:auto;padding-bottom:8px">
+            @for(f of selectedStorecheck()?.fotos; track f; let idx = $index) {
+              <div style="position:relative; width:280px; height:280px; flex-shrink:0; border-radius:8px; overflow:hidden; border:1px solid var(--border); display:flex; align-items:center; justify-content:center; background:#111;">
+                <img [src]="f" alt="Evidencia" style="width:100%; height:100%; object-fit:contain;">
+                <div style="position:absolute; bottom:12px; right:12px; background:rgba(0,0,0,0.85); padding:6px 12px; border-radius:4px; font-size:11px; color:#fff; font-weight:600; backdrop-filter:blur(4px);">
+                  FOTO {{idx + 1}}
+                </div>
+              </div>
+            }
+          </div>
+        } @else if(selectedStorecheck()?.foto) {
+          <div style="width:100%; height:120px; border-radius:8px; border:1px dashed var(--border); display:flex; flex-direction:column; align-items:center; justify-content:center; background:rgba(255,255,255,0.01); color:var(--text-muted);">
+            <span style="font-size:12px;">Se registró con foto, pero la imagen no está disponible (formato antiguo).</span>
           </div>
         } @else {
           <div style="width:100%; height:120px; border-radius:8px; border:1px dashed var(--border); display:flex; flex-direction:column; align-items:center; justify-content:center; background:rgba(255,255,255,0.01); color:var(--text-muted);">
