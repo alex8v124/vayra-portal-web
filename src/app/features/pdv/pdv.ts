@@ -62,15 +62,16 @@ export class PdvComponent {
     this.activeModal.set('new_pdv');
   }
 
-  saveNewPDV(nombre: string, codigo: string, distrito: string, tipo: string, mercaderista: string) {
-    if (!nombre || !codigo) {
-      this.dataService.showNotification('Nombre y código son obligatorios', 'error');
+  saveNewPDV(nombre: string, codigo: string, distrito: string, tipo: string) {
+    if (!nombre || !codigo || !distrito || !tipo) {
+      this.dataService.showNotification('Complete los campos obligatorios.', 'error');
       return;
     }
-    this.dataService.addPDV({
+    const newPDV = {
       id: 0, nombre, codigo, distrito, tipo,
-      estado: 'Activo', mercaderista, visitas: 0, pendiente: true, puestos: []
-    });
+      estado: 'Activo' as const, visitas: 0, pendiente: true, puestos: []
+    };
+    this.dataService.addPDV(newPDV);
     this.closeModal();
   }
 
@@ -82,16 +83,18 @@ export class PdvComponent {
     }
   }
 
-  saveEditPDV(nombre: string, codigo: string, distrito: string, tipo: string, mercaderista: string, estado: string) {
-    if (!nombre || !codigo) {
-      this.dataService.showNotification('Nombre y código son obligatorios', 'error');
+  saveEditPDV(nombre: string, codigo: string, distrito: string, tipo: string, estado: string) {
+    if (!nombre || !codigo || !distrito || !tipo) {
+      this.dataService.showNotification('Complete los campos obligatorios.', 'error');
       return;
     }
     const pdv = this.selectedPdv();
-    this.dataService.updatePDV({
-      ...pdv, nombre, codigo, distrito, tipo, mercaderista, estado
-    });
-    this.closeModal();
+    if (pdv) {
+      this.dataService.updatePDV({
+        ...pdv, nombre, codigo, distrito, tipo, estado: estado as 'Activo'|'Inactivo'
+      });
+      this.closeModal();
+    }
   }
 
   // ── PUESTOS CRUD (con múltiples actividades) ──
@@ -184,7 +187,7 @@ export class PdvComponent {
 
   confirmVisit() {
     this.dataService.showNotification('Visita iniciada — redirigiendo a storecheck');
-    this.router.navigate(['/storecheck'], { queryParams: { pdvId: this.selectedPdv().id, pdvName: this.selectedPdv().nombre } });
+    this.router.navigate(['/storecheck'], { queryParams: { pdvId: this.selectedPdv().id, pdvName: this.selectedPdv().nombre, autoCamera: 'pdv' } });
     this.closeModal();
   }
 }

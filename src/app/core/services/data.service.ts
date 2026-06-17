@@ -85,7 +85,7 @@ export class DataService {
       next: (data) => {
         const mapped = data.map(d => ({
           id: d.pdvId, nombre: d.pdvNombre, codigo: d.codigo, distrito: d.distrito,
-          tipo: d.tipo, estado: d.estado, mercaderista: d.mercaderista, 
+          tipo: d.tipo, estado: d.estado,
           visitas: d.visitas, pendiente: d.pendiente, puestos: [] as any[]
         }));
         this.pdvs.set(mapped);
@@ -147,7 +147,7 @@ export class DataService {
   }
   
   updatePDV(updated: PDV) {
-    const payload = { pdvId: updated.id, pdvNombre: updated.nombre, codigo: updated.codigo, distrito: updated.distrito, tipo: updated.tipo, estado: updated.estado, mercaderista: updated.mercaderista, visitas: updated.visitas, pendiente: updated.pendiente };
+    const payload = { pdvId: updated.id, pdvNombre: updated.nombre, codigo: updated.codigo, distrito: updated.distrito, tipo: updated.tipo, estado: updated.estado, visitas: updated.visitas, pendiente: updated.pendiente };
     this.http.put(`${this.apiUrl}/pdvs/${updated.id}`, payload).subscribe({
       next: () => {
         this.pdvs.update(list => list.map(p => p.id === updated.id ? updated : p));
@@ -158,7 +158,7 @@ export class DataService {
   }
 
   addPDV(pdv: PDV) {
-    const payload = { pdvNombre: pdv.nombre, codigo: pdv.codigo, distrito: pdv.distrito, tipo: pdv.tipo, estado: pdv.estado, mercaderista: pdv.mercaderista, visitas: pdv.visitas, pendiente: pdv.pendiente };
+    const payload = { pdvNombre: pdv.nombre, codigo: pdv.codigo, distrito: pdv.distrito, tipo: pdv.tipo, estado: pdv.estado, visitas: pdv.visitas, pendiente: pdv.pendiente };
     this.http.post<any>(`${this.apiUrl}/pdvs`, payload).subscribe({
       next: (res) => {
         pdv.id = res.pdvId;
@@ -202,6 +202,27 @@ export class DataService {
         this.skus.update(list => [...list, sku]);
         this.showNotification('SKU creado', 'success');
       }
+    });
+  }
+
+  deleteSKU(id: number) {
+    this.http.delete(`${this.apiUrl}/productos/${id}`).subscribe({
+      next: () => {
+        this.skus.update(list => list.filter(s => s.id !== id));
+        this.showNotification('SKU eliminado', 'success');
+      },
+      error: () => this.showNotification('Error al eliminar SKU', 'error')
+    });
+  }
+
+  addSKUsBulk(skus: SKU[]) {
+    const payload = skus.map(sku => ({ nombre: sku.nombre, marca: sku.marca, categoria: sku.categoria, estado: sku.activo, precio: 0 }));
+    this.http.post<any[]>(`${this.apiUrl}/productos/bulk`, payload).subscribe({
+      next: (res) => {
+        this.loadSkus(); // Recargamos para obtener todos los IDs reales generados
+        this.showNotification(`Se importaron ${res.length} SKUs con éxito`, 'success');
+      },
+      error: () => this.showNotification('Error importando los SKUs', 'error')
     });
   }
 
@@ -258,7 +279,8 @@ export class DataService {
           mercaderista: d.mercaderista, estado: d.estado, skus: d.skus, foto: d.foto, 
           actividad: d.actividad, observaciones: d.observaciones,
           pmId: d.pm ? d.pm.pmId : undefined,
-          reporte: d.reporte
+          reporte: d.reporte,
+          fotos: d.fotos ? JSON.parse(d.fotos) : null
         }));
         this.storechecks.set(mapped.reverse());
       }

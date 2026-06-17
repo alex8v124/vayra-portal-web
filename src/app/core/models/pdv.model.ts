@@ -12,7 +12,6 @@ export interface PDV {
   distrito: string;
   tipo: string;
   estado: 'Activo' | 'Inactivo';
-  mercaderista: string;
   visitas: number;
   pendiente: boolean;
   puestos: Puesto[];

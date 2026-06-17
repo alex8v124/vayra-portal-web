@@ -32,8 +32,7 @@
         <span class="badge badge-info"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg> {{pdv.puestos.length}} puestos</span>
       </div>
       <div style="border-top:1px solid var(--border);padding-top:12px;display:flex;justify-content:space-between;align-items:center">
-        <div><div style="font-size:11px;color:var(--text-muted)">Mercaderista</div><div style="font-size:12px;font-weight:600;color:var(--text-main)">{{pdv.mercaderista}}</div></div>
-        <div style="text-align:right"><div style="font-size:11px;color:var(--text-muted)">Visitas</div><div style="font-size:18px;font-weight:700;color:var(--primary)">{{pdv.visitas}}</div></div>
+        <div><div style="font-size:11px;color:var(--text-muted)">Estado</div><div style="font-size:12px;font-weight:600;color:var(--text-main)"><span [class]="pdv.estado === 'Activo' ? 'badge badge-success' : 'badge badge-danger'">{{pdv.estado}}</span></div></div>
       </div>
       @if(pdv.estado === 'Activo') {
         <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);display:flex;gap:8px">
@@ -186,27 +185,24 @@
       <button class="modal-close" (click)="closeModal()"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
     </div>
     <div class="modal-body">
-      <div class="field"><label>Nombre del Punto de Venta *</label><input #pdvNombre type="text" placeholder="Ej: Mercado Central"></div>
+      <div class="field"><label>Nombre del Punto de Venta *</label><input #npNombre type="text" placeholder="Ej: Mercado Central"></div>
       <div class="field-row">
-        <div class="field"><label>Código Interno *</label><input #pdvCodigo type="text" placeholder="PDV-XXX"></div>
+        <div class="field"><label>Código Interno *</label><input #npCodigo type="text" placeholder="PDV-XXX"></div>
         <div class="field">
           <label>Distrito</label>
-          <select #pdvDistrito>
+          <select #npDistrito>
             <option>San Isidro</option><option>Miraflores</option><option>Surco</option><option>San Miguel</option><option>La Victoria</option><option>San Borja</option>
           </select>
         </div>
       </div>
       <div class="field"><label>Tipo de Mercado *</label>
-        <select #pdvTipo>
+        <select #npTipo>
           <option>Mercado Mayorista</option><option>Mercado Minorista</option><option>Mercado Tradicional</option><option>Bodega</option>
         </select>
       </div>
-      <div class="field"><label>Mercaderista Asignado</label>
-        <select #pdvMerca><option>Carlos Vega</option><option>María Torres</option></select>
-      </div>
       <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:24px">
         <button class="btn btn-secondary" (click)="closeModal()">Cancelar</button>
-        <button class="btn btn-primary" (click)="saveNewPDV(pdvNombre.value, pdvCodigo.value, pdvDistrito.value, pdvTipo.value, pdvMerca.value)">Guardar Punto de Venta</button>
+        <button class="btn btn-primary" (click)="saveNewPDV(npNombre.value, npCodigo.value, npDistrito.value, npTipo.value)">Crear Punto de Venta</button>
       </div>
     </div>
   </div>
@@ -236,16 +232,10 @@
           <option [selected]="selectedPdv()?.tipo === 'Mercado'">Mercado</option>
         </select>
       </div>
-      <div class="field"><label>Mercaderista Asignado</label><input #epMerca type="text" [value]="selectedPdv()?.mercaderista"></div>
-      <div class="field"><label>Estado</label>
-        <select #epEstado>
-          <option value="Activo" [selected]="selectedPdv()?.estado === 'Activo'">Activo</option>
-          <option value="Inactivo" [selected]="selectedPdv()?.estado === 'Inactivo'">Inactivo</option>
-        </select>
-      </div>
+      <div class="field"><label>Estado</label><select #epEstado [value]="selectedPdv()?.estado"><option>Activo</option><option>Inactivo</option></select></div>
       <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:24px">
         <button class="btn btn-secondary" (click)="closeModal()">Cancelar</button>
-        <button class="btn btn-primary" (click)="saveEditPDV(epNombre.value, epCodigo.value, epDistrito.value, epTipo.value, epMerca.value, epEstado.value)">Guardar Cambios</button>
+        <button class="btn btn-primary" (click)="saveEditPDV(epNombre.value, epCodigo.value, epDistrito.value, epTipo.value, epEstado.value)">Guardar Cambios</button>
       </div>
     </div>
   </div>

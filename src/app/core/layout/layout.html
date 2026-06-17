@@ -3,11 +3,11 @@
     <div class="sb-header">
       @if(sidebarCollapsed()) {
         <div style="margin: 0 auto; display:flex; align-items:center; justify-content:center;">
-          <img src="logo-xplora-cuadrado.png" alt="Xplora Icon" width="28" height="28" style="object-fit: contain;">
+          <img src="logo-xplora-cuadrado.png" alt="Vayra Icon" width="28" height="28" style="object-fit: contain;">
         </div>
       } @else {
         <div id="sb-brand" style="flex:1; display:flex; align-items:center;">
-          <img src="logo-xplora-cn-nombre.png" alt="Xplora" height="24" style="object-fit: contain;">
+          <img src="logo-xplora-cn-nombre.png" alt="Vayra" height="24" style="object-fit: contain;">
         </div>
       }
       <button class="sb-toggle" (click)="toggleSidebar()"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
@@ -40,7 +40,7 @@
   <div id="main">
     <header id="topbar">
       <!-- The title can be static or dynamic, for simplicity, leave empty or static as we use router -->
-      <h1 id="page-title" style="font-size:16px;font-weight:700;color:var(--text-main); margin:0;">Xplora</h1>
+      <h1 id="page-title" style="font-size:16px;font-weight:700;color:var(--text-main); margin:0;">Vayra</h1>
       <div style="display:flex;align-items:center;gap:12px">
         <button class="btn btn-ghost btn-sm" (click)="cycleTheme()" title="Cambiar tema" style="display:flex; align-items:center; justify-content:center; padding:6px; border-radius:50%; margin-right:8px">
           @if(themeService.currentTheme() === 'light') {

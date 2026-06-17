@@ -3,7 +3,29 @@
     <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
     <input placeholder="Buscar SKU..." (input)="updateFilter($event)" [value]="filter()">
   </div>
-  <button class="btn btn-secondary btn-sm" (click)="dataService.showNotification('Importando SKUs desde Excel...')">
+  <select class="btn btn-secondary btn-sm" style="border: 1px solid var(--border-color); background: var(--card-bg); color: var(--text-color);" (change)="updateCategoryFilter($event)">
+    <option value="">Todas las Categorías</option>
+    @for(cat of uniqueCategories(); track cat) {
+      <option [value]="cat">{{cat}}</option>
+    }
+  </select>
+  <select class="btn btn-secondary btn-sm" style="border: 1px solid var(--border-color); background: var(--card-bg); color: var(--text-color);" (change)="updateMarcaFilter($event)">
+    <option value="">Todas las Marcas</option>
+    @for(marca of uniqueMarcas(); track marca) {
+      <option [value]="marca">{{marca}}</option>
+    }
+  </select>
+  <select class="btn btn-secondary btn-sm" style="border: 1px solid var(--border-color); background: var(--card-bg); color: var(--text-color);" (change)="updateEstadoFilter($event)">
+    <option value="">Todos los Estados</option>
+    <option value="activo">Activo</option>
+    <option value="inactivo">Inactivo</option>
+  </select>
+  <input type="file" #fileInput (change)="importExcel($event)" style="display: none" accept=".xlsx, .xls, .csv">
+  <button class="btn btn-secondary btn-sm" (click)="exportToExcel()">
+    <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+    Exportar .xlsx
+  </button>
+  <button class="btn btn-secondary btn-sm" (click)="fileInput.click()">
     <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
     Carga Masiva Excel
   </button>
@@ -15,7 +37,15 @@
 <div class="card card-0">
   <div class="tbl-wrap">
     <table>
-      <thead><tr><th>Código</th><th>Producto</th><th>Marca</th><th>Categoría</th><th>Estado</th><th>Activar / Desactivar</th><th class="td-actions">Acciones</th></tr></thead>
+      <thead><tr>
+        <th (click)="setSort('codigo')" style="cursor:pointer">Código @if(sortCol() === 'codigo') { <span>{{sortAsc() ? '▲' : '▼'}}</span> }</th>
+        <th (click)="setSort('nombre')" style="cursor:pointer">Producto @if(sortCol() === 'nombre') { <span>{{sortAsc() ? '▲' : '▼'}}</span> }</th>
+        <th (click)="setSort('marca')" style="cursor:pointer">Marca @if(sortCol() === 'marca') { <span>{{sortAsc() ? '▲' : '▼'}}</span> }</th>
+        <th (click)="setSort('categoria')" style="cursor:pointer">Categoría @if(sortCol() === 'categoria') { <span>{{sortAsc() ? '▲' : '▼'}}</span> }</th>
+        <th (click)="setSort('activo')" style="cursor:pointer">Estado @if(sortCol() === 'activo') { <span>{{sortAsc() ? '▲' : '▼'}}</span> }</th>
+        <th>Activar / Desactivar</th>
+        <th class="td-actions">Acciones</th>
+      </tr></thead>
       <tbody>
         @for(s of filteredSKUs(); track s.id) {
           <tr [style.opacity]="s.activo?1:.6">
@@ -32,7 +62,12 @@
             </td>
             <td class="td-actions">
               <div class="td-actions-inner">
-                <button class="btn btn-ghost btn-sm" (click)="dataService.showNotification('Editando: ' + s.nombre)"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+                <button class="btn btn-ghost btn-sm" (click)="openEditSKUModal(s)" title="Editar">
+                  <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                </button>
+                <button class="btn btn-ghost btn-sm" (click)="deleteSKU(s)" title="Eliminar" style="color:var(--danger)">
+                  <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+                </button>
               </div>
             </td>
           </tr>
@@ -49,7 +84,7 @@
 <div class="modal-overlay" (click)="closeModal()">
   <div class="modal-box narrow" (click)="$event.stopPropagation()">
     <div class="modal-header">
-      <div class="modal-title">Registrar Nuevo SKU</div>
+      <div class="modal-title">{{selectedSku() ? 'Editar SKU' : 'Registrar Nuevo SKU'}}</div>
       <button class="modal-close" (click)="closeModal()">
         <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
       </button>
@@ -57,31 +92,25 @@
     <div class="modal-body">
       <div class="field">
         <label>Nombre del Producto *</label>
-        <input #skuNombre type="text" placeholder="Ej: Galletas Choco">
+        <input #skuNombre type="text" placeholder="Ej: Galletas Choco" [value]="selectedSku()?.nombre || ''">
       </div>
       <div class="field-row">
         <div class="field">
-          <label>Código (EAN/SKU)</label>
-          <input #skuCodigo type="text" placeholder="SKU-XXX">
+          <label>Código (EAN/SKU) *</label>
+          <input #skuCodigo type="text" placeholder="SKU-XXX" [value]="selectedSku()?.codigo || ''" [disabled]="!!selectedSku()">
         </div>
         <div class="field">
           <label>Marca</label>
-          <input #skuMarca type="text" placeholder="Marca del producto">
+          <input #skuMarca type="text" placeholder="Marca del producto" [value]="selectedSku()?.marca || ''">
         </div>
       </div>
       <div class="field">
         <label>Categoría</label>
-        <select #skuCat>
-          <option>Bebidas</option>
-          <option>Lácteos</option>
-          <option>Snacks</option>
-          <option>Confitería</option>
-          <option>Cuidado Personal</option>
-        </select>
+        <input #skuCat type="text" placeholder="Ej: Abarrotes, Limpieza, Bebidas..." [value]="selectedSku()?.categoria || ''">
       </div>
       <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:24px">
         <button class="btn btn-secondary" (click)="closeModal()">Cancelar</button>
-        <button class="btn btn-primary" (click)="saveNewSKU(skuNombre.value, skuCodigo.value, skuMarca.value, skuCat.value)">Guardar SKU</button>
+        <button class="btn btn-primary" (click)="saveSKU(skuNombre.value, skuCodigo.value, skuMarca.value, skuCat.value)">{{selectedSku() ? 'Actualizar SKU' : 'Guardar SKU'}}</button>
       </div>
     </div>
   </div>

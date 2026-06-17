@@ -17,6 +17,24 @@ export class ActividadesComponent {
   selectedAct = signal<any>(null);
   selectedSkuIds = signal<number[]>([]);
 
+  skuFilter = signal('');
+  skuCatFilter = signal('');
+
+  uniqueCategories = computed(() => {
+    const cats = this.dataService.skus().map(s => s.categoria).filter(c => c);
+    return [...new Set(cats)].sort();
+  });
+
+  filteredSkusForModal = computed(() => {
+    const term = this.skuFilter().toLowerCase();
+    const cat = this.skuCatFilter();
+    return this.dataService.skus().filter(s => {
+      const matchTerm = s.nombre.toLowerCase().includes(term) || s.codigo.toLowerCase().includes(term);
+      const matchCat = cat === '' || s.categoria === cat;
+      return matchTerm && matchCat;
+    });
+  });
+
   activePlanningsToday = computed(() => {
     const currentUser = this.auth.currentUser();
     if (!currentUser || currentUser.role !== 'mercaderista') return [];
@@ -58,10 +76,20 @@ export class ActividadesComponent {
     }
   }
 
+  updateSkuFilter(event: Event) {
+    this.skuFilter.set((event.target as HTMLInputElement).value);
+  }
+
+  updateSkuCatFilter(event: Event) {
+    this.skuCatFilter.set((event.target as HTMLSelectElement).value);
+  }
+
   closeModal() {
     this.activeModal.set('none');
     this.selectedAct.set(null);
     this.selectedSkuIds.set([]);
+    this.skuFilter.set('');
+    this.skuCatFilter.set('');
   }
 
   openNewActModal() {

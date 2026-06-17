@@ -151,16 +151,30 @@
       </div>
       <div class="field">
         <label>SKUs participantes <span style="font-size:11px;color:var(--text-muted);font-weight:normal">(selecciona uno o varios)</span></label>
+        
+        <div style="display:flex;gap:10px;margin-bottom:8px">
+          <div class="searchbar" style="flex:1">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input placeholder="Buscar SKU..." (input)="updateSkuFilter($event)" [value]="skuFilter()">
+          </div>
+          <select class="btn btn-secondary btn-sm" style="border: 1px solid var(--border-color); background: var(--card-bg); color: var(--text-color); height: 36px; padding: 0 10px;" (change)="updateSkuCatFilter($event)">
+            <option value="">Todas las Categorías</option>
+            @for(cat of uniqueCategories(); track cat) {
+              <option [value]="cat">{{cat}}</option>
+            }
+          </select>
+        </div>
+
         <div style="max-height:200px;overflow-y:auto;border:1px solid var(--border);border-radius:10px;background:var(--card-bg);">
-          @for(s of dataService.skus(); track s.id; let last = $last) {
+          @for(s of filteredSkusForModal(); track s.id; let last = $last) {
             <label style="display:flex;align-items:center;gap:10px;padding:12px 14px;cursor:pointer;transition:background .15s;" [style.border-bottom]="last ? 'none' : '1px solid var(--border)'">
               <input type="checkbox" [checked]="selectedSkuIds().includes(s.id)" (change)="toggleSkuSelection(s.id, $event)" style="width:16px;height:16px;accent-color:var(--primary);cursor:pointer;">
               <span style="font-size:14px;font-weight:500;color:var(--text-main)">{{s.nombre}}</span>
               <span class="badge badge-info" style="font-size:10px;margin-left:4px">{{s.categoria}}</span>
             </label>
           }
-          @if(dataService.skus().length === 0) {
-            <div style="padding:16px;text-align:center;color:var(--text-muted);font-size:13px">No hay SKUs registrados aún.</div>
+          @if(filteredSkusForModal().length === 0) {
+            <div style="padding:16px;text-align:center;color:var(--text-muted);font-size:13px">No se encontraron SKUs con esos filtros.</div>
           }
         </div>
       </div>

@@ -1,4 +1,4 @@
-import { Component, computed, signal, OnInit } from '@angular/core';
+import { Component, computed, signal, OnInit, ViewChild, ElementRef } from '@angular/core';
 import { DataService } from '../../core/services/data.service';
 import { AuthService } from '../../core/services/auth.service';
 import { FormsModule } from '@angular/forms';
@@ -24,8 +24,18 @@ export class StorecheckComponent implements OnInit {
     actividad: "",
     actividadId: null,
     observaciones: "",
-    productos: []
+    productos: [],
+    fotos: []
   });
+
+  isCameraOpen = signal(false);
+  currentCaptureType = signal<'pdv' | 'puesto' | null>(null);
+  capturedPhotoPDV = signal<string | null>(null);
+  capturedPhotoPuesto = signal<string | null>(null);
+  stream = signal<MediaStream | null>(null);
+
+  @ViewChild('videoElement', { static: false }) videoElement!: ElementRef<HTMLVideoElement>;
+  @ViewChild('canvasElement', { static: false }) canvasElement!: ElementRef<HTMLCanvasElement>;
 
   filteredSCs = computed(() => {
     const term = this.filter().toLowerCase();
@@ -77,9 +87,15 @@ export class StorecheckComponent implements OnInit {
       if (params['pdvName']) {
         this.scForm.set({
           pdv: params['pdvName'], puestoNum: "", puestoNombre: "", pmId: null, actividad: "", actividadId: null, observaciones: "",
-          productos: []
+          productos: [], fotos: []
         });
-        this.scStep.set(2);
+        
+        if (params['autoCamera'] === 'pdv') {
+          this.scStep.set(1);
+          setTimeout(() => this.openCamera('pdv'), 500);
+        } else {
+          this.scStep.set(1);
+        }
       }
     });
   }
@@ -98,6 +114,9 @@ export class StorecheckComponent implements OnInit {
 
   cancelSC() {
     this.scStep.set(0);
+    this.closeCamera();
+    this.capturedPhotoPDV.set(null);
+    this.capturedPhotoPuesto.set(null);
   }
 
   nextStep() {
@@ -165,6 +184,69 @@ export class StorecheckComponent implements OnInit {
     this.nextStep();
   }
 
+  async openCamera(type: 'pdv' | 'puesto') {
+    try {
+      this.currentCaptureType.set(type);
+      const mediaStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+      this.stream.set(mediaStream);
+      this.isCameraOpen.set(true);
+      setTimeout(() => {
+        if (this.videoElement && this.videoElement.nativeElement) {
+          this.videoElement.nativeElement.srcObject = mediaStream;
+          this.videoElement.nativeElement.play().catch(e => console.error(e));
+        }
+      }, 100);
+    } catch (error) {
+      this.dataService.showNotification("Error al acceder a la cámara. Revisa los permisos.", "error");
+    }
+  }
+
+  capturePhoto() {
+    if (this.videoElement && this.canvasElement) {
+      const video = this.videoElement.nativeElement;
+      const canvas = this.canvasElement.nativeElement;
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+        const type = this.currentCaptureType();
+        if (type === 'pdv') {
+          this.capturedPhotoPDV.set(dataUrl);
+        } else {
+          this.capturedPhotoPuesto.set(dataUrl);
+        }
+        
+        const fotos = [this.capturedPhotoPDV() || '', this.capturedPhotoPuesto() || ''].filter(Boolean);
+        this.scForm.update(f => ({...f, fotos: fotos}));
+        
+        this.closeCamera();
+      }
+    }
+  }
+
+  closeCamera() {
+    const s = this.stream();
+    if (s) {
+      s.getTracks().forEach(track => track.stop());
+      this.stream.set(null);
+    }
+    this.isCameraOpen.set(false);
+    this.currentCaptureType.set(null);
+  }
+
+  retakePhoto(type: 'pdv' | 'puesto') {
+    if (type === 'pdv') {
+      this.capturedPhotoPDV.set(null);
+    } else {
+      this.capturedPhotoPuesto.set(null);
+    }
+    const fotos = [this.capturedPhotoPDV() || '', this.capturedPhotoPuesto() || ''].filter(Boolean);
+    this.scForm.update(f => ({...f, fotos: fotos}));
+    this.openCamera(type);
+  }
+
   completeSC() {
     const f = this.scForm();
     const isMercaderista = this.auth.currentUser()?.role === 'mercaderista';
@@ -181,6 +263,7 @@ export class StorecheckComponent implements OnInit {
       actividad: f.actividad || "General",
       observaciones: f.observaciones,
       pmId: f.pmId || undefined,
+      fotos: f.fotos && f.fotos.length > 0 ? JSON.stringify(f.fotos) : null,
       reporte: JSON.stringify(f.productos.map((p: any) => ({
         nombre: p.nombre || p.skuNombre,
         stockInicial: p.stockInicial,
@@ -188,6 +271,8 @@ export class StorecheckComponent implements OnInit {
       })))
     });
     this.dataService.showNotification("Storecheck completado y guardado exitosamente");
+    this.capturedPhotoPDV.set(null);
+    this.capturedPhotoPuesto.set(null);
     this.scStep.set(0);
   }
 
