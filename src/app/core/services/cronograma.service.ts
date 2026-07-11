@@ -5,7 +5,10 @@ import { Observable } from 'rxjs';
 export interface Cronograma {
   id?: number;
   nombre: string;
-  datosJson: string;
+  planningIds: string;
+  fechaInicio?: string;
+  fechaFin?: string;
+  datosJson: string; // JSON with generated visits
 }
 
 @Injectable({

@@ -1,4 +1,4 @@
-import { Component, OnInit, Inject, PLATFORM_ID } from '@angular/core';
+import { Component, OnInit, Inject, PLATFORM_ID, ChangeDetectorRef } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import * as XLSX from 'xlsx';
@@ -47,13 +47,15 @@ export class StorecheckProcessorComponent implements OnInit {
   constructor(
     private processorService: StorecheckProcessorService,
     private cronogramaService: CronogramaService,
-    @Inject(PLATFORM_ID) private platformId: Object
+    @Inject(PLATFORM_ID) private platformId: Object,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit() {
     if (isPlatformBrowser(this.platformId)) {
       this.cronogramaService.listar().subscribe((data: Cronograma[]) => {
         this.cronogramas = data;
+        this.cdr.detectChanges();
       });
     }
   }
@@ -65,6 +67,7 @@ export class StorecheckProcessorComponent implements OnInit {
     this.isLoading = true;
     this.loadingProgress = 10;
     this.loadingMessage = 'Leyendo archivo...';
+    this.cdr.detectChanges(); // Forzar actualización inicial
 
     const reader = new FileReader();
     
@@ -72,12 +75,14 @@ export class StorecheckProcessorComponent implements OnInit {
     const interval = setInterval(() => {
       if (this.loadingProgress < 85) {
         this.loadingProgress += 15;
+        this.cdr.detectChanges(); // Forzar actualización en el intervalo
       }
     }, 100);
 
     reader.onload = (e: any) => {
       this.loadingMessage = 'Procesando datos (esto puede tomar unos segundos)...';
       this.loadingProgress = 90;
+      this.cdr.detectChanges(); // Forzar actualización antes del bloqueo pesado
       
       // Use setTimeout to allow the browser to paint the progress bar update before blocking the thread
       setTimeout(() => {
@@ -93,17 +98,27 @@ export class StorecheckProcessorComponent implements OnInit {
           clearInterval(interval);
           this.loadingProgress = 100;
           this.loadingMessage = '¡Completado!';
+          this.cdr.detectChanges(); // Forzar actualización de completado
           
           setTimeout(() => {
             this.isLoading = false;
             this.step = 2;
+            this.cdr.detectChanges(); // Forzar actualización del paso 2
           }, 400);
         } catch (error) {
           clearInterval(interval);
           this.isLoading = false;
+          this.cdr.detectChanges(); // Forzar actualización si hay error
           alert('Error al leer el archivo Excel.');
         }
       }, 100);
+    };
+    
+    reader.onerror = (err) => {
+      clearInterval(interval);
+      this.isLoading = false;
+      this.cdr.detectChanges();
+      alert('Error leyendo el archivo desde el disco.');
     };
     
     reader.readAsArrayBuffer(file);
@@ -171,7 +186,10 @@ export class StorecheckProcessorComponent implements OnInit {
       try {
         const arr = JSON.parse(crono.datosJson);
         this.cronogramaData = arr;
-        this.cronogramaMercados = arr.map((x: any) => x.MERCADO).filter((x: any) => x);
+        // Extraer mercados únicos, ya que ahora hay múltiples visitas por mercado
+        const uniqueMarkets = new Set<string>();
+        arr.forEach((x: any) => { if(x.MERCADO) uniqueMarkets.add(x.MERCADO); });
+        this.cronogramaMercados = Array.from(uniqueMarkets);
       } catch (e) {
         this.cronogramaMercados = [];
       }

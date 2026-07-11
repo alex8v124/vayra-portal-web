@@ -14,6 +14,7 @@ export class PlanningComponent {
   filter = signal('');
   activeModal = signal<'none' | 'new_planning' | 'edit_planning'>('none');
   selectedPlanning = signal<Planning | null>(null);
+  visibleCount = signal<number>(50);
 
   // Form helper signals
   formMercaderistaId = signal<number>(0);
@@ -23,6 +24,7 @@ export class PlanningComponent {
   
   // Multiple selection for PMs and Acts
   selectedPmIds = signal<number[]>([]);
+  pmDiasSemana = signal<{[pmId: number]: string}>({});
   selectedActIds = signal<number[]>([]);
 
   // List of mercaderistas (role = mercaderista)
@@ -47,33 +49,60 @@ export class PlanningComponent {
     return this.dataService.actividades();
   });
 
+  pageSize = signal(12);
+  currentPage = signal(1);
+
   filteredPlannings = computed(() => {
-    const term = this.filter().toLowerCase();
-    const allPlans = this.dataService.plannings();
-    
-    let teamPlans = allPlans;
-    const currentUser = this.auth.currentUser();
-    
-    if (currentUser?.role === 'mercaderista') {
-      teamPlans = allPlans.filter(p => p.usuarioId === currentUser.id);
+    let list = this.dataService.plannings();
+    if (this.auth.currentUser()?.role === 'mercaderista') {
+      list = list.filter(p => p.usuarioId === this.auth.currentUser()?.id);
     } else if (!this.auth.isAdmin()) {
-      const myTeam = currentUser?.equipoComercial || '';
+      const myTeam = this.auth.currentUser()?.equipoComercial || '';
       const myTeamMercIds = this.dataService.users()
         .filter(u => u.role === 'mercaderista' && u.equipoComercial === myTeam)
         .map(u => u.id);
-      teamPlans = allPlans.filter(p => myTeamMercIds.includes(p.usuarioId));
+      list = list.filter(p => myTeamMercIds.includes(p.usuarioId));
     }
+    const term = this.filter().toLowerCase().trim();
+    if (term) {
+      list = list.filter(p => 
+        (p.pdvNombre && p.pdvNombre.toLowerCase().includes(term)) ||
+        (p.mercaderistaName && p.mercaderistaName.toLowerCase().includes(term))
+      );
+    }
+    return list;
+  });
 
-    return teamPlans.filter(p => 
-      (p.mercaderistaName?.toLowerCase().includes(term) || false) || 
-      (p.pdvNombre?.toLowerCase().includes(term) || false)
-    );
+  paginatedPlannings = computed(() => {
+    const start = (this.currentPage() - 1) * this.pageSize();
+    return this.filteredPlannings().slice(start, start + this.pageSize());
+  });
+
+  totalPages = computed(() => {
+    return Math.ceil(this.filteredPlannings().length / this.pageSize()) || 1;
   });
 
   constructor(public dataService: DataService, public auth: AuthService) {}
 
   updateFilter(event: Event) {
     this.filter.set((event.target as HTMLInputElement).value);
+    this.currentPage.set(1);
+  }
+
+  nextPage() {
+    if (this.currentPage() < this.totalPages()) {
+      this.currentPage.update(p => p + 1);
+    }
+  }
+
+  prevPage() {
+    if (this.currentPage() > 1) {
+      this.currentPage.update(p => p - 1);
+    }
+  }
+
+  goToPage(p: number) {
+    this.currentPage.set(p);
   }
 
   onPdvChange(event: Event) {
@@ -89,6 +118,22 @@ export class PlanningComponent {
     this.selectedPmIds.update(ids => 
       ids.includes(pmId) ? ids.filter(id => id !== pmId) : [...ids, pmId]
     );
+    // Remove if unchecked, or default to Lunes if checked
+    const selected = this.selectedPmIds().includes(pmId);
+    this.pmDiasSemana.update(dias => {
+      const copy = { ...dias };
+      if (!selected) {
+        delete copy[pmId];
+      } else if (!copy[pmId]) {
+        copy[pmId] = 'Lunes';
+      }
+      return copy;
+    });
+  }
+
+  setPmDiaSemana(pmId: number, dia: string, event: Event) {
+    event.stopPropagation();
+    this.pmDiasSemana.update(dias => ({...dias, [pmId]: dia}));
   }
 
   toggleActSelection(actId: number) {
@@ -113,6 +158,7 @@ export class PlanningComponent {
     this.formFechaInicio.set('');
     this.formFechaFin.set('');
     this.selectedPmIds.set([]);
+    this.pmDiasSemana.set({});
     this.selectedActIds.set([]);
     this.activeModal.set('new_planning');
   }
@@ -128,7 +174,13 @@ export class PlanningComponent {
     const pmIds = p.pmIds ? p.pmIds.split(',').map(Number).filter(n => !isNaN(n)) : [];
     const actIds = p.actIds ? p.actIds.split(',').map(Number).filter(n => !isNaN(n)) : [];
     
+    let diasParsed = {};
+    if (p.diasSemanaPms) {
+      try { diasParsed = JSON.parse(p.diasSemanaPms); } catch (e) {}
+    }
+
     this.selectedPmIds.set(pmIds);
+    this.pmDiasSemana.set(diasParsed);
     this.selectedActIds.set(actIds);
     this.activeModal.set('edit_planning');
   }
@@ -153,6 +205,7 @@ export class PlanningComponent {
       usuarioId: this.formMercaderistaId(),
       pdvId: this.formPdvId(),
       pmIds: this.selectedPmIds().join(','),
+      diasSemanaPms: JSON.stringify(this.pmDiasSemana()),
       actIds: this.selectedActIds().join(','),
       fechaInicio: this.formFechaInicio(),
       fechaFin: this.formFechaFin(),

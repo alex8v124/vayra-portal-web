@@ -19,6 +19,7 @@ export class DataService {
   actividades = signal<Actividad[]>([]);
   storechecks = signal<Storecheck[]>([]);
   plannings = signal<Planning[]>([]);
+  isLoadingPlannings = signal<boolean>(true);
   equipos = signal<EquipoComercial[]>([]);
 
   private apiUrl = 'http://localhost:8080/api/data';
@@ -320,9 +321,16 @@ export class DataService {
 
   // ==== PLANNING ====
   loadPlannings() {
+    this.isLoadingPlannings.set(true);
     this.http.get<Planning[]>(`${this.apiUrl}/plannings`).subscribe({
-      next: (data) => this.plannings.set(data),
-      error: (err) => console.error('Error fetching plannings', err)
+      next: (data) => {
+        this.plannings.set(data);
+        this.isLoadingPlannings.set(false);
+      },
+      error: (err) => {
+        console.error('Error fetching plannings', err);
+        this.isLoadingPlannings.set(false);
+      }
     });
   }
 
