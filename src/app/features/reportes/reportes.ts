@@ -126,23 +126,32 @@ export class ReportesComponent implements OnInit {
   analistas = computed(() => {
     const list = this.dataService.users().filter(u => {
       const r = (u.role || '').toLowerCase();
-      return r === 'analista' || r === 'controller' || r === 'admin';
+      return r === 'analista' || r === 'controller' || r === 'admin' || r === 'supervisor' || r === 'gerente';
     });
-    return Array.from(new Set(list.map(u => u.name))).filter(Boolean).sort().map(name => ({ id: name, name }));
+    const fromUsers = list.map(u => u.name);
+    return Array.from(new Set(fromUsers)).filter(Boolean).sort().map(name => ({ id: name, name }));
   });
   supervisores = computed(() => {
     const list = this.dataService.users().filter(u => {
       const r = (u.role || '').toLowerCase();
-      return r === 'supervisor' || r === 'admin' || r === 'gerente';
+      return r === 'supervisor' || r === 'admin' || r === 'gerente' || r === 'controller';
     });
-    return Array.from(new Set(list.map(u => u.name))).filter(Boolean).sort().map(name => ({ id: name, name }));
+    const fromUsers = list.map(u => u.name);
+    const fromEquipos = this.dataService.equipos().map(e => (e as any).supervisor);
+    return Array.from(new Set([...fromUsers, ...fromEquipos])).filter(Boolean).sort().map(name => ({ id: name, name }));
   });
   gestores = computed(() => {
+    const supNames = new Set(this.supervisores().map(s => s.name.toLowerCase()));
     const list = this.dataService.users().filter(u => {
       const r = (u.role || '').toLowerCase();
       return r === 'mercaderista' || r === 'gestor';
     });
-    return Array.from(new Set(list.map(u => u.name))).filter(Boolean).sort().map(name => ({ id: name, name }));
+    const fromUsers = list.map(u => u.name);
+    const fromSc = this.dataService.storechecks().map(s => s.mercaderista);
+    return Array.from(new Set([...fromUsers, ...fromSc]))
+      .filter(n => Boolean(n) && (!supNames.has(n.toLowerCase()) || list.some(u => u.name.toLowerCase() === n.toLowerCase())))
+      .sort()
+      .map(name => ({ id: name, name }));
   });
   actividadesUnicas = computed(() => {
     const fromAct = this.dataService.actividades().map(a => a.nombre);

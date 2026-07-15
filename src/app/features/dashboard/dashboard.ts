@@ -74,10 +74,18 @@ export class DashboardComponent implements AfterViewInit, OnDestroy, OnInit {
       try { if (c && typeof c.destroy === 'function') c.destroy(); } catch(e) {}
     });
     this.chartInstances = {};
+    if (typeof Chart !== 'undefined' && typeof Chart.getChart === 'function') {
+      ['chart-cobertura', 'chart-pie', 'chart-merc', 'chart-trend'].forEach(id => {
+        try {
+          const existing = Chart.getChart(id);
+          if (existing && typeof existing.destroy === 'function') existing.destroy();
+        } catch(e) {}
+      });
+    }
   }
 
   initDashboardCharts() {
-    if (!isPlatformBrowser(this.platformId)) return;
+    if (!isPlatformBrowser(this.platformId) || typeof Chart === 'undefined') return;
     const cob = document.getElementById("chart-cobertura");
     const pie = document.getElementById("chart-pie");
     const merc = document.getElementById("chart-merc");
