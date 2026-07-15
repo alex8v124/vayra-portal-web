@@ -275,7 +275,9 @@ export class StorecheckProcessorComponent implements OnInit {
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `${this.numeroStorecheck}_Storecheck_${this.promocionElegida.replace(/[^a-zA-Z0-9]/g, '_')}.xlsx`;
+        const cleanPromo = this.promocionElegida.replace(/[\/\\:*?"<>|]/g, '_').trim();
+        const numLower = this.numeroStorecheck ? this.numeroStorecheck.toLowerCase() : '1er';
+        a.download = `${numLower} Storecheck ${cleanPromo}.xlsx`;
         document.body.appendChild(a);
         a.click();
         window.URL.revokeObjectURL(url);
