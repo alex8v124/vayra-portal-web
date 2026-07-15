@@ -42,13 +42,40 @@ export class ReportesComponent implements OnInit {
     }
 
     return this.dataService.storechecks().filter(item => {
-      if (item.estado !== 'Completado') return false;
-      const p = item.pdv.toLowerCase() + " " + (item.puesto || '').toLowerCase();
-      const matchSearch = sTerm === "" || p.includes(sTerm) || (item.id + "").includes(sTerm) || (item.actividad || "").toLowerCase().includes(sTerm);
-      const m1 = !f.storecheck || item.pdv.toLowerCase().includes(f.storecheck.toLowerCase()) || (item.actividad || "").toLowerCase().includes(f.storecheck.toLowerCase());
-      const m2 = !f.controller || item.mercaderista.toLowerCase().includes(f.controller.toLowerCase());
-      const m3 = !f.supervisor || item.mercaderista.toLowerCase().includes(f.supervisor.toLowerCase());
-      const m4 = !f.gestor || item.mercaderista.toLowerCase().includes(f.gestor.toLowerCase());
+      const p = (item.pdv || '').toLowerCase() + " " + (item.puesto || '').toLowerCase();
+      const matchSearch = sTerm === "" || p.includes(sTerm) || (item.id + "").includes(sTerm) || (item.actividad || "").toLowerCase().includes(sTerm) || (item.mercaderista || "").toLowerCase().includes(sTerm);
+      
+      const m1 = !f.storecheck || (item.actividad || "").toLowerCase().includes(f.storecheck.toLowerCase()) || (item.pdv || "").toLowerCase().includes(f.storecheck.toLowerCase());
+      
+      let m2 = true;
+      if (f.controller) {
+        const ctrlUser = this.dataService.users().find(u => u.name.trim().toLowerCase() === f.controller.trim().toLowerCase());
+        if (ctrlUser && ctrlUser.equipoComercial) {
+          const teamMembers = this.dataService.users()
+            .filter(u => u.equipoComercial === ctrlUser.equipoComercial)
+            .map(u => u.name.trim().toLowerCase());
+          const merc = (item.mercaderista || "").trim().toLowerCase();
+          m2 = teamMembers.some(uName => uName === merc || uName.includes(merc) || merc.includes(uName)) || merc.includes(f.controller.toLowerCase());
+        } else {
+          m2 = (item.mercaderista || "").toLowerCase().includes(f.controller.toLowerCase());
+        }
+      }
+
+      let m3 = true;
+      if (f.supervisor) {
+        const supUser = this.dataService.users().find(u => u.name.trim().toLowerCase() === f.supervisor.trim().toLowerCase());
+        if (supUser && supUser.equipoComercial) {
+          const teamMembers = this.dataService.users()
+            .filter(u => u.equipoComercial === supUser.equipoComercial)
+            .map(u => u.name.trim().toLowerCase());
+          const merc = (item.mercaderista || "").trim().toLowerCase();
+          m3 = teamMembers.some(uName => uName === merc || uName.includes(merc) || merc.includes(uName)) || merc.includes(f.supervisor.toLowerCase());
+        } else {
+          m3 = (item.mercaderista || "").toLowerCase().includes(f.supervisor.toLowerCase());
+        }
+      }
+
+      const m4 = !f.gestor || (item.mercaderista || "").toLowerCase().includes(f.gestor.toLowerCase());
       
       let m5 = true;
       if (f.fechaIni && item.fecha < f.fechaIni) m5 = false;
@@ -90,15 +117,29 @@ export class ReportesComponent implements OnInit {
   
   hoy = new Date().toISOString().split("T")[0];
 
-  analistas = computed(() => this.dataService.users().filter(u => u.role === 'analista' || u.role === 'admin'));
-  supervisores = computed(() => this.dataService.users().filter(u => u.role === 'admin'));
-  gestores = computed(() => this.dataService.users().filter(u => u.role === 'mercaderista'));
-  actividadesUnicas = computed(() => [...new Set(this.dataService.storechecks().filter(s => s.estado === 'Completado').map(s => s.actividad))]);
+  analistas = computed(() => {
+    const list = this.dataService.users().filter(u => u.role === 'analista' || u.role === 'admin' || (u.role as any) === 'controller');
+    return Array.from(new Set(list.map(u => u.name))).filter(Boolean).sort().map(name => ({ id: name, name }));
+  });
+  supervisores = computed(() => {
+    const list = this.dataService.users().filter(u => u.role === 'supervisor' || u.role === 'admin');
+    return Array.from(new Set(list.map(u => u.name))).filter(Boolean).sort().map(name => ({ id: name, name }));
+  });
+  gestores = computed(() => {
+    const fromUsers = this.dataService.users().filter(u => u.role === 'mercaderista' || (u.role as any) === 'gestor').map(u => u.name);
+    const fromStorechecks = this.dataService.storechecks().map(s => s.mercaderista);
+    return Array.from(new Set([...fromUsers, ...fromStorechecks])).filter(Boolean).sort().map(name => ({ id: name, name }));
+  });
+  actividadesUnicas = computed(() => {
+    const fromAct = this.dataService.actividades().map(a => a.nombre);
+    const fromSt = this.dataService.storechecks().map(s => s.actividad);
+    return Array.from(new Set([...fromAct, ...fromSt])).filter(Boolean).sort();
+  });
 
   constructor(public dataService: DataService) {}
 
   ngOnInit() {
-    this.dataService.loadModuleData('reportes');
+    this.dataService.loadModuleData('reportes', true);
     this.triggerSearchProgress();
   }
 

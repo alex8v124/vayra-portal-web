@@ -54,6 +54,9 @@ export class DataService {
         case 'reportes':
         case 'validaciones':
           if (forceReload || !this.storechecks().length) this.loadStorechecks();
+          if (forceReload || !this.users().length) this.loadUsers();
+          if (forceReload || !this.actividades().length) this.loadActividades();
+          if (forceReload || !this.pdvs().length) this.loadPdvs();
           break;
         case 'planning':
           if (forceReload || !this.plannings().length) this.loadPlannings();
