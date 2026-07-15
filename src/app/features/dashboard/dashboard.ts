@@ -1,4 +1,4 @@
-import { Component, AfterViewInit, computed, OnDestroy, Inject, PLATFORM_ID } from '@angular/core';
+import { Component, AfterViewInit, computed, OnDestroy, Inject, PLATFORM_ID, OnInit } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { DataService } from '../../core/services/data.service';
 
@@ -10,7 +10,7 @@ declare const Chart: any;
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.css'
 })
-export class DashboardComponent implements AfterViewInit, OnDestroy {
+export class DashboardComponent implements AfterViewInit, OnDestroy, OnInit {
   chartInstances: any = {};
 
   activosSKU = computed(() => this.dataService.skus().filter(s => s.activo).length);
@@ -24,6 +24,10 @@ export class DashboardComponent implements AfterViewInit, OnDestroy {
     public dataService: DataService,
     @Inject(PLATFORM_ID) private platformId: Object
   ) {}
+
+  ngOnInit() {
+    this.dataService.loadModuleData('dashboard');
+  }
 
   ngAfterViewInit() {
     if (isPlatformBrowser(this.platformId)) {

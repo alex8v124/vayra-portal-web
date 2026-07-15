@@ -18,6 +18,7 @@ export class DataService {
   skus = signal<SKU[]>([]);
   actividades = signal<Actividad[]>([]);
   storechecks = signal<Storecheck[]>([]);
+  isLoadingStorechecks = signal<boolean>(false);
   plannings = signal<Planning[]>([]);
   isLoadingPlannings = signal<boolean>(true);
   equipos = signal<EquipoComercial[]>([]);
@@ -26,15 +27,58 @@ export class DataService {
   private apiUsuarios = 'http://localhost:8080/api/usuarios';
   private apiEquipos = 'http://localhost:8080/api/data/equipos';
 
+  private loadedModules = new Set<string>();
+
   constructor(private http: HttpClient, @Inject(PLATFORM_ID) private platformId: Object) { 
     if (isPlatformBrowser(this.platformId)) {
       this.loadUsers();
-      this.loadPdvs();
-      this.loadSkus();
-      this.loadActividades();
-      this.loadStorechecks();
-      this.loadPlannings();
-      this.loadEquipos();
+    }
+  }
+
+  loadModuleData(moduleName: string, forceReload = false) {
+    if (!isPlatformBrowser(this.platformId)) return;
+    if (forceReload || !this.loadedModules.has(moduleName)) {
+      this.loadedModules.add(moduleName);
+      switch (moduleName) {
+        case 'pdv':
+          if (forceReload || !this.pdvs().length) this.loadPdvs();
+          if (forceReload || !this.plannings().length) this.loadPlannings();
+          break;
+        case 'storecheck':
+          if (forceReload || !this.storechecks().length) this.loadStorechecks();
+          if (forceReload || !this.pdvs().length) this.loadPdvs();
+          if (forceReload || !this.actividades().length) this.loadActividades();
+          if (forceReload || !this.skus().length) this.loadSkus();
+          break;
+        case 'reportes':
+        case 'validaciones':
+          if (forceReload || !this.storechecks().length) this.loadStorechecks();
+          break;
+        case 'planning':
+          if (forceReload || !this.plannings().length) this.loadPlannings();
+          if (forceReload || !this.pdvs().length) this.loadPdvs();
+          if (forceReload || !this.actividades().length) this.loadActividades();
+          break;
+        case 'skus':
+          if (forceReload || !this.skus().length) this.loadSkus();
+          break;
+        case 'actividades':
+          if (forceReload || !this.actividades().length) this.loadActividades();
+          if (forceReload || !this.skus().length) this.loadSkus();
+          if (forceReload || !this.plannings().length) this.loadPlannings();
+          break;
+        case 'usuarios':
+        case 'equipos':
+          if (forceReload || !this.users().length) this.loadUsers();
+          if (forceReload || !this.equipos().length) this.loadEquipos();
+          break;
+        case 'dashboard':
+          if (forceReload || !this.storechecks().length) this.loadStorechecks();
+          if (forceReload || !this.skus().length) this.loadSkus();
+          if (forceReload || !this.pdvs().length) this.loadPdvs();
+          if (forceReload || !this.actividades().length) this.loadActividades();
+          break;
+      }
     }
   }
 
@@ -100,15 +144,21 @@ export class DataService {
   loadPuestos() {
     this.http.get<any[]>(`${this.apiUrl}/pms`).subscribe({
       next: (pms) => {
+        const pmMap = new Map<number, any[]>();
+        for (const pm of pms) {
+          const pid = Number(pm.pdvId);
+          if (!pmMap.has(pid)) pmMap.set(pid, []);
+          pmMap.get(pid)!.push({
+            pmId: Number(pm.pmId),
+            num: 'P-' + String(pm.pmId).padStart(2, '0'),
+            nombre: pm.pmNombre,
+            actIds: (pm.actIds || []).map(Number)
+          });
+        }
         this.pdvs.update(pdvList => {
           return pdvList.map(pdv => ({
             ...pdv,
-            puestos: pms.filter(pm => pm.pdvId === pdv.id).map(pm => ({
-              pmId: pm.pmId,
-              num: 'P-' + String(pm.pmId).padStart(2, '0'),
-              nombre: pm.pmNombre,
-              actIds: pm.actIds || []
-            }))
+            puestos: pmMap.get(Number(pdv.id)) || []
           }));
         });
       }
@@ -119,7 +169,7 @@ export class DataService {
     const payload = { pmNombre: nombre, pdvId, actIds };
     this.http.post<any>(`${this.apiUrl}/pms`, payload).subscribe({
       next: () => {
-        this.loadPdvs();
+        this.loadPuestos();
         this.showNotification('Puesto agregado exitosamente');
       },
       error: () => this.showNotification('Error al crear puesto', 'error')
@@ -130,7 +180,7 @@ export class DataService {
     const payload = { pmNombre: nombre, pdvId, actIds };
     this.http.put(`${this.apiUrl}/pms/${pmId}`, payload).subscribe({
       next: () => {
-        this.loadPdvs();
+        this.loadPuestos();
         this.showNotification('Puesto actualizado');
       },
       error: () => this.showNotification('Error al actualizar puesto', 'error')
@@ -140,7 +190,7 @@ export class DataService {
   deletePuesto(pmId: number) {
     this.http.delete(`${this.apiUrl}/pms/${pmId}`).subscribe({
       next: () => {
-        this.loadPdvs();
+        this.loadPuestos();
         this.showNotification('Puesto eliminado');
       },
       error: () => this.showNotification('Error al eliminar puesto', 'error')
@@ -273,6 +323,7 @@ export class DataService {
 
   // ==== STORECHECKS ====
   loadStorechecks() {
+    this.isLoadingStorechecks.set(true);
     this.http.get<any[]>(`${this.apiUrl}/reportes`).subscribe({
       next: (data) => {
         const mapped = data.map(d => ({
@@ -284,7 +335,9 @@ export class DataService {
           fotos: d.fotos ? JSON.parse(d.fotos) : null
         }));
         this.storechecks.set(mapped.reverse());
-      }
+        this.isLoadingStorechecks.set(false);
+      },
+      error: () => this.isLoadingStorechecks.set(false)
     });
   }
 
@@ -336,8 +389,10 @@ export class DataService {
 
   addPlanning(planning: Planning) {
     this.http.post<Planning>(`${this.apiUrl}/plannings`, planning).subscribe({
-      next: () => {
-        this.loadPlannings();
+      next: (res) => {
+        if (res && (res as any).planningId) planning.planningId = (res as any).planningId;
+        else if (res && (res as any).id) planning.planningId = (res as any).id;
+        this.plannings.update(list => [planning, ...list]);
         this.showNotification('Planificación creada con éxito', 'success');
       },
       error: () => this.showNotification('Error al crear planificación', 'error')
@@ -347,8 +402,8 @@ export class DataService {
   updatePlanning(id: number, planning: Planning) {
     this.http.put<Planning>(`${this.apiUrl}/plannings/${id}`, planning).subscribe({
       next: () => {
-        this.loadPlannings();
-        this.showNotification('Planificación actualizada', 'success');
+        this.plannings.update(list => list.map(p => p.planningId === id ? { ...planning, planningId: id } : p));
+        this.showNotification('Planificación actualizada con éxito', 'success');
       },
       error: () => this.showNotification('Error al actualizar planificación', 'error')
     });
@@ -357,7 +412,7 @@ export class DataService {
   deletePlanning(id: number) {
     this.http.delete(`${this.apiUrl}/plannings/${id}`).subscribe({
       next: () => {
-        this.loadPlannings();
+        this.plannings.update(list => list.filter(p => p.planningId !== id));
         this.showNotification('Planificación eliminada', 'success');
       },
       error: () => this.showNotification('Error al eliminar planificación', 'error')

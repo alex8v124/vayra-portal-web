@@ -2,11 +2,27 @@
   <div class="kpi-card"><div><div class="kpi-label">Pendientes</div><div class="kpi-value">{{pend()}}</div></div><div class="kpi-icon" style="background:rgba(245,158,11,.12)"><svg width="20" height="20" fill="none" stroke="var(--warning)" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div></div>
   <div class="kpi-card"><div><div class="kpi-label">Completados</div><div class="kpi-value">{{comp()}}</div></div><div class="kpi-icon" style="background:rgba(16,185,129,.12)"><svg width="20" height="20" fill="none" stroke="var(--success)" stroke-width="2" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div></div>
   <div class="kpi-card"><div><div class="kpi-label">Con Foto</div><div class="kpi-value">{{foto()}}</div></div><div class="kpi-icon" style="background:rgba(14,165,233,.12)"><svg width="20" height="20" fill="none" stroke="var(--primary)" stroke-width="2" viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></div></div>
-</div>
 <div class="card">
   <div style="font-size:14px;font-weight:700;color:var(--text-main);margin-bottom:4px">Módulo de Validación y Corrección</div>
   <p style="font-size:13px;color:var(--text-muted);margin:0 0 20px">Revisa y aprueba la información antes de generar reportes finales.</p>
-  @for(sc of filteredStorechecks(); track sc.id) {
+  <div style="display:flex;gap:12px;margin-bottom:16px;align-items:center;flex-wrap:wrap">
+    <div style="flex:1;position:relative;min-width:240px">
+      <svg style="position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--text-muted)" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input type="text" [value]="filter()" (input)="updateFilter($event)" placeholder="Buscar por PDV, puesto, mercaderista o estado..." style="width:100%;padding:10px 14px 10px 38px;border:1px solid var(--border);border-radius:10px;font-size:13px;background:var(--surface);color:var(--text-main);outline:none;transition:all .2s">
+    </div>
+  </div>
+
+  @if (isSearching() || dataService.isLoadingStorechecks()) {
+    <div class="search-progress-bar">
+      <div class="search-progress-bar-fill"></div>
+      <span class="search-progress-text">
+        <svg class="search-progress-spinner" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10" opacity="0.25"/><path d="M12 2a10 10 0 0 1 10 10" opacity="0.8"/></svg>
+        {{ dataService.isLoadingStorechecks() ? 'Cargando datos desde el servidor...' : 'Buscando y filtrando validaciones...' }}
+      </span>
+    </div>
+  }
+
+  @for(sc of paginatedStorechecks(); track sc.id) {
     <div class="val-row" [style.border-left]="'3px solid ' + (sc.estado==='Completado'?'var(--success)':'var(--warning)')">
       <div class="val-icon" [style.background]="sc.estado==='Completado'?'rgba(16,185,129,.15)':'rgba(245,158,11,.15)'">
         @if(sc.estado === 'Completado') {
@@ -35,6 +51,28 @@
   }
   @if(filteredStorechecks().length === 0) {
     <div class="tbl-empty" style="padding:24px">No hay storechecks registrados para mostrar.</div>
+  } @else {
+    <div class="pagination-controls" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; margin-top: 24px; padding: 16px 24px; border-top: 1px solid var(--border, #e2e8f0); background: rgba(248, 250, 252, 0.6); border-radius: 12px;">
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <span style="font-size: 13px; font-weight: 600; color: var(--text-muted);">Registros por página:</span>
+        <select [value]="pageSize()" (change)="onPageSizeChange($event)" style="padding: 6px 12px; border-radius: 8px; border: 1px solid var(--border, #cbd5e1); font-size: 13px; font-weight: 600; color: var(--text-main); background: var(--white); cursor: pointer;">
+          <option [value]="15">15 registros</option>
+          <option [value]="20">20 registros</option>
+          <option [value]="30">30 registros</option>
+          <option [value]="50">50 registros</option>
+          <option [value]="100">100 registros</option>
+        </select>
+      </div>
+      <div style="display: flex; align-items: center; gap: 14px;">
+        <button class="btn btn-secondary btn-sm" [disabled]="currentPage() === 1" (click)="prevPage()" style="border-radius: 50%; padding: 8px;">
+          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+        <span style="font-size: 14px; font-weight: 600; color: var(--text-main);">Página {{currentPage()}} de {{totalPages()}} (Total: {{filteredStorechecks().length}})</span>
+        <button class="btn btn-secondary btn-sm" [disabled]="currentPage() === totalPages()" (click)="nextPage()" style="border-radius: 50%; padding: 8px;">
+          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+        </button>
+      </div>
+    </div>
   }
 </div>
 

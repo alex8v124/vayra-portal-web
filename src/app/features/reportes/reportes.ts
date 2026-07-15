@@ -1,4 +1,4 @@
-import { Component, computed, signal } from '@angular/core';
+import { Component, computed, signal, OnInit } from '@angular/core';
 import { DataService } from '../../core/services/data.service';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -12,32 +12,81 @@ import * as XLSX from 'xlsx';
   templateUrl: './reportes.html',
   styleUrl: './reportes.css'
 })
-export class ReportesComponent {
+export class ReportesComponent implements OnInit {
   filterPanelOpen = signal(false);
   repFiltros = signal({storecheck:"",controller:"",supervisor:"",gestor:"",fechaIni:"",fechaFin:""});
   repFiltrosAplicados = signal({storecheck:"",controller:"",supervisor:"",gestor:"",fechaIni:"",fechaFin:""});
   searchTerm = signal('');
+  isSearching = signal(false);
+  private searchTimeout: any;
+
+  triggerSearchProgress() {
+    this.isSearching.set(true);
+    if (this.searchTimeout) clearTimeout(this.searchTimeout);
+    this.searchTimeout = setTimeout(() => {
+      this.isSearching.set(false);
+    }, 450);
+  }
+
+  pageSize = signal(20);
+  currentPage = signal(1);
 
   dataFiltrada = computed(() => {
-    let data = this.dataService.storechecks().filter(sc => sc.estado === 'Completado');
     const f = this.repFiltrosAplicados();
-    const sTerm = this.searchTerm().toLowerCase();
+    const sTerm = this.searchTerm().toLowerCase().trim();
+    const hasActiveFilters = Object.values(f).some(v => v !== "") || sTerm !== "";
     
-    if(f.storecheck) data = data.filter(sc => sc.actividad === f.storecheck);
-    if(f.controller) data = data.filter(sc => sc.mercaderista === f.controller); // mock logic
-    if(f.supervisor) data = data.filter(sc => sc.mercaderista === f.supervisor);
-    if(f.gestor) data = data.filter(sc => sc.mercaderista === f.gestor);
-    if(f.fechaIni) data = data.filter(sc => sc.fecha >= f.fechaIni);
-    if(f.fechaFin) data = data.filter(sc => sc.fecha <= f.fechaFin);
-
-    if (sTerm) {
-      data = data.filter(sc => sc.pdv.toLowerCase().includes(sTerm) || sc.mercaderista.toLowerCase().includes(sTerm));
+    // El módulo de reportes debe listar únicamente cuando se haga el filtrado
+    if (!hasActiveFilters) {
+      return [];
     }
-    
-    return data;
+
+    return this.dataService.storechecks().filter(item => {
+      if (item.estado !== 'Completado') return false;
+      const p = item.pdv.toLowerCase() + " " + (item.puesto || '').toLowerCase();
+      const matchSearch = sTerm === "" || p.includes(sTerm) || (item.id + "").includes(sTerm) || (item.actividad || "").toLowerCase().includes(sTerm);
+      const m1 = !f.storecheck || item.pdv.toLowerCase().includes(f.storecheck.toLowerCase()) || (item.actividad || "").toLowerCase().includes(f.storecheck.toLowerCase());
+      const m2 = !f.controller || item.mercaderista.toLowerCase().includes(f.controller.toLowerCase());
+      const m3 = !f.supervisor || item.mercaderista.toLowerCase().includes(f.supervisor.toLowerCase());
+      const m4 = !f.gestor || item.mercaderista.toLowerCase().includes(f.gestor.toLowerCase());
+      
+      let m5 = true;
+      if (f.fechaIni && item.fecha < f.fechaIni) m5 = false;
+      if (f.fechaFin && item.fecha > f.fechaFin + "T23:59:59") m5 = false;
+      
+      return matchSearch && m1 && m2 && m3 && m4 && m5;
+    }).sort((a, b) => (Number(b.id) || 0) - (Number(a.id) || 0));
   });
 
-  hayFiltros = computed(() => Object.values(this.repFiltrosAplicados()).some(v => v !== ""));
+  paginatedReportes = computed(() => {
+    const start = (this.currentPage() - 1) * this.pageSize();
+    return this.dataFiltrada().slice(start, start + this.pageSize());
+  });
+
+  totalPages = computed(() => {
+    return Math.ceil(this.dataFiltrada().length / this.pageSize()) || 1;
+  });
+
+  prevPage() {
+    if (this.currentPage() > 1) {
+      this.currentPage.update(p => p - 1);
+    }
+  }
+
+  nextPage() {
+    if (this.currentPage() < this.totalPages()) {
+      this.currentPage.update(p => p + 1);
+    }
+  }
+
+  onPageSizeChange(event: Event) {
+    const val = +(event.target as HTMLSelectElement).value;
+    this.pageSize.set(val);
+    this.currentPage.set(1);
+    this.triggerSearchProgress();
+  }
+
+  hayFiltros = computed(() => Object.values(this.repFiltrosAplicados()).some(v => v !== "") || this.searchTerm().trim() !== "");
   
   hoy = new Date().toISOString().split("T")[0];
 
@@ -48,6 +97,11 @@ export class ReportesComponent {
 
   constructor(public dataService: DataService) {}
 
+  ngOnInit() {
+    this.dataService.loadModuleData('reportes');
+    this.triggerSearchProgress();
+  }
+
   toggleFilterPanel() {
     this.filterPanelOpen.set(!this.filterPanelOpen());
   }
@@ -56,9 +110,16 @@ export class ReportesComponent {
     this.filterPanelOpen.set(false);
   }
 
+  onSearchChange() {
+    this.currentPage.set(1);
+    this.triggerSearchProgress();
+  }
+
   aplicarFiltro() {
     this.repFiltrosAplicados.set({...this.repFiltros()});
+    this.currentPage.set(1);
     this.filterPanelOpen.set(false);
+    this.triggerSearchProgress();
     this.dataService.showNotification("Filtros aplicados correctamente");
   }
 
@@ -66,7 +127,10 @@ export class ReportesComponent {
     const empty = {storecheck:"",controller:"",supervisor:"",gestor:"",fechaIni:"",fechaFin:""};
     this.repFiltros.set({...empty});
     this.repFiltrosAplicados.set({...empty});
+    this.searchTerm.set('');
+    this.currentPage.set(1);
     this.filterPanelOpen.set(false);
+    this.triggerSearchProgress();
     this.dataService.showNotification("Filtros eliminados");
   }
 

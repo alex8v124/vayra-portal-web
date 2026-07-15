@@ -1,13 +1,87 @@
 <div class="toolbar">
   <div class="searchbar">
     <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-    <input placeholder="Buscar PDV por nombre..." (input)="updateFilter($event)" [value]="filter()">
+    <input placeholder="Buscar PDV por nombre, código o distrito..." (input)="updateFilter($event)" [value]="filter()">
   </div>
-  <button class="btn btn-secondary btn-sm"><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg> Filtros</button>
+  <button class="btn btn-sm" [class.btn-primary]="filterPanelOpen()" [class.btn-secondary]="!filterPanelOpen()" (click)="toggleFilterPanel()">
+    <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+    Filtros
+    @if(hayFiltros()) { <span style='background:var(--white);color:var(--primary);border-radius:99px;padding:0 5px;font-size:10px;font-weight:700;margin-left:2px'>●</span> }
+  </button>
   @if(auth.currentUser()?.role === 'admin') {
     <button class="btn btn-primary btn-sm" (click)="openNewPDVModal()"><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Nuevo PDV</button>
   }
 </div>
+
+@if(filterPanelOpen()) {
+  <div id="filter-panel" style="margin-bottom:20px;animation:fadeDown .2s ease">
+    <div style="background:var(--white);border:1px solid var(--border);border-radius:12px;box-shadow:0 4px 20px rgba(0,0,0,.08);overflow:hidden">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 24px;border-bottom:1px solid var(--border)">
+        <div style="display:flex;align-items:center;gap:10px">
+          <svg width="18" height="18" fill="none" stroke="var(--primary)" stroke-width="2" viewBox="0 0 24 24"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+          <span style="font-size:14px;font-weight:600;color:var(--text-main)">Filtrar Puntos de Venta</span>
+        </div>
+        @if(hayFiltros()) {
+          <button (click)="limpiarFiltros()" style="font-size:12px;color:var(--danger);background:none;border:none;cursor:pointer;font-weight:600;text-decoration:underline">✕ Limpiar filtros</button>
+        }
+      </div>
+      <div style="padding:20px 24px">
+        <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));gap:14px;margin-bottom:16px">
+          <div class="fp-select-wrap">
+            <label class="fp-label">DISTRITO</label>
+            <select class="fp-select" [value]="selectedDistrito()" (change)="selectedDistrito.set($any($event.target).value)">
+              <option value="">Todos los distritos</option>
+              @for(d of distritosUnicos(); track d) { <option [value]="d">{{d}}</option> }
+            </select>
+            <span class="fp-arrow">▾</span>
+          </div>
+          <div class="fp-select-wrap">
+            <label class="fp-label">TIPO / CANAL</label>
+            <select class="fp-select" [value]="selectedTipo()" (change)="selectedTipo.set($any($event.target).value)">
+              <option value="">Todos los tipos</option>
+              @for(t of tiposUnicos(); track t) { <option [value]="t">{{t}}</option> }
+            </select>
+            <span class="fp-arrow">▾</span>
+          </div>
+          <div class="fp-select-wrap">
+            <label class="fp-label">ESTADO</label>
+            <select class="fp-select" [value]="selectedEstado()" (change)="selectedEstado.set($any($event.target).value)">
+              <option value="">Activos e Inactivos</option>
+              <option value="Activo">Activo</option>
+              <option value="Inactivo">Inactivo</option>
+            </select>
+            <span class="fp-arrow">▾</span>
+          </div>
+          <div class="fp-select-wrap">
+            <label class="fp-label">SITUACIÓN AL DÍA</label>
+            <select class="fp-select" [value]="selectedPendiente()" (change)="selectedPendiente.set($any($event.target).value)">
+              <option value="">Todas las situaciones</option>
+              <option value="pendiente">Pendiente</option>
+              <option value="al_dia">Al día</option>
+              @if(auth.currentUser()?.role === 'mercaderista') {
+                <option value="hoy">Programado hoy</option>
+              }
+            </select>
+            <span class="fp-arrow">▾</span>
+          </div>
+        </div>
+        @if(hayFiltros()) {
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding-top:12px;border-top:1px dashed var(--border)">
+            <span style="font-size:12px;color:var(--text-muted);font-weight:600">Filtros activos:</span>
+            @if(selectedDistrito()) { <span class="badge badge-info" style="cursor:pointer" (click)="selectedDistrito.set('')">Distrito: {{selectedDistrito()}} ×</span> }
+            @if(selectedTipo()) { <span class="badge badge-info" style="cursor:pointer" (click)="selectedTipo.set('')">Tipo: {{selectedTipo()}} ×</span> }
+            @if(selectedEstado()) { <span class="badge badge-success" style="cursor:pointer" (click)="selectedEstado.set('')">Estado: {{selectedEstado()}} ×</span> }
+            @if(selectedPendiente()) { <span class="badge badge-warning" style="cursor:pointer" (click)="selectedPendiente.set('')">Situación: {{selectedPendiente() === 'pendiente' ? 'Pendiente' : selectedPendiente() === 'al_dia' ? 'Al día' : 'Programado hoy'}} ×</span> }
+          </div>
+        }
+      </div>
+      <div style="display:flex;justify-content:flex-end;gap:12px;padding:12px 24px;background:var(--surface);border-top:1px solid var(--border)">
+        <button class="btn btn-secondary btn-sm" (click)="limpiarFiltros()">Resetear</button>
+        <button class="btn btn-primary btn-sm" (click)="toggleFilterPanel()">Ver {{filteredPDVs().length}} PDV(s)</button>
+      </div>
+    </div>
+  </div>
+}
 
 <div class="pdv-grid">
   @for(pdv of filteredPDVs(); track pdv.id) {
@@ -43,6 +117,16 @@
         <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border)">
           <button class="btn btn-secondary btn-sm btn-full" (click)="openPuestosModal(pdv.id)"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg> Ver Puestos</button>
         </div>
+      }
+    </div>
+  }
+  @if(filteredPDVs().length === 0) {
+    <div style="grid-column:1/-1;text-align:center;padding:48px 20px;background:var(--white);border:1px dashed var(--border);border-radius:14px;color:var(--text-muted)">
+      <svg width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" style="margin:0 auto 12px;opacity:.5;display:block"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <div style="font-size:15px;font-weight:600;color:var(--text-main);margin-bottom:6px">No se encontraron puntos de venta</div>
+      <div style="font-size:13px;max-width:360px;margin:0 auto 16px">No hay PDVs que coincidan con la búsqueda o los filtros seleccionados.</div>
+      @if(hayFiltros() || filter()) {
+        <button class="btn btn-secondary btn-sm" style="margin:0 auto" (click)="limpiarTodosFiltros()">Limpiar búsqueda y filtros</button>
       }
     </div>
   }

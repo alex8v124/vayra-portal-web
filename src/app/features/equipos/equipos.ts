@@ -1,4 +1,4 @@
-import { Component, computed, signal } from '@angular/core';
+import { Component, computed, signal, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { DataService } from '../../core/services/data.service';
 import { EquipoComercial } from '../../core/models/equipo-comercial.model';
@@ -9,7 +9,7 @@ import { EquipoComercial } from '../../core/models/equipo-comercial.model';
   templateUrl: './equipos.html',
   styleUrl: './equipos.css'
 })
-export class EquiposComercialesComponent {
+export class EquiposComercialesComponent implements OnInit {
   filter = signal('');
   showModal = signal(false);
 
@@ -24,6 +24,10 @@ export class EquiposComercialesComponent {
   });
 
   constructor(public dataService: DataService) {}
+
+  ngOnInit() {
+    this.dataService.loadModuleData('equipos');
+  }
 
   updateFilter(event: Event) {
     this.filter.set((event.target as HTMLInputElement).value);

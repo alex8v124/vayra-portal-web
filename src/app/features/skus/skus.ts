@@ -1,4 +1,4 @@
-import { Component, computed, signal } from '@angular/core';
+import { Component, computed, signal, OnInit } from '@angular/core';
 import { DataService } from '../../core/services/data.service';
 import * as XLSX from 'xlsx';
 import { SKU } from '../../core/models/sku.model';
@@ -9,7 +9,7 @@ import { SKU } from '../../core/models/sku.model';
   templateUrl: './skus.html',
   styleUrl: './skus.css'
 })
-export class SkusComponent {
+export class SkusComponent implements OnInit {
   filter = signal('');
   categoryFilter = signal('');
   marcaFilter = signal('');
@@ -62,6 +62,10 @@ export class SkusComponent {
   });
 
   constructor(public dataService: DataService) {}
+
+  ngOnInit() {
+    this.dataService.loadModuleData('skus');
+  }
 
   updateFilter(event: Event) {
     this.filter.set((event.target as HTMLInputElement).value);

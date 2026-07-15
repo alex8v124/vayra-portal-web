@@ -1,4 +1,4 @@
-import { Component, computed, signal } from '@angular/core';
+import { Component, computed, signal, OnInit } from '@angular/core';
 import { DataService } from '../../core/services/data.service';
 import { AuthService } from '../../core/services/auth.service';
 import { Storecheck } from '../../core/models/storecheck.model';
@@ -9,17 +9,32 @@ import { Storecheck } from '../../core/models/storecheck.model';
   templateUrl: './validaciones.html',
   styleUrl: './validaciones.css'
 })
-export class ValidacionesComponent {
+export class ValidacionesComponent implements OnInit {
   
   activeModal = signal<string | null>(null);
   selectedStorecheck = signal<Storecheck | null>(null);
+  filter = signal('');
+  isSearching = signal(false);
+  private searchTimeout: any;
 
-  // Filtered storechecks based on user role and team
+  triggerSearchProgress() {
+    this.isSearching.set(true);
+    if (this.searchTimeout) clearTimeout(this.searchTimeout);
+    this.searchTimeout = setTimeout(() => {
+      this.isSearching.set(false);
+    }, 450);
+  }
+
+  pageSize = signal(20);
+  currentPage = signal(1);
+
+  // Filtered storechecks based on user role and team, sorted by ID desc
   filteredStorechecks = computed(() => {
     const currentUser = this.auth.currentUser();
-    const storechecks = this.dataService.storechecks();
+    const storechecks = [...this.dataService.storechecks()];
     if (!currentUser) return [];
 
+    let filtered = storechecks;
     // If supervisor, only show members of their commercial team
     if (currentUser.role === 'supervisor') {
       const teamName = currentUser.equipoComercial;
@@ -29,14 +44,59 @@ export class ValidacionesComponent {
         .filter(u => u.equipoComercial === teamName)
         .map(u => u.name.trim().toLowerCase());
 
-      return storechecks.filter(s => {
+      filtered = storechecks.filter(s => {
         const mercName = (s.mercaderista || '').trim().toLowerCase();
         return teamUsernames.some(uName => uName === mercName || uName.includes(mercName) || mercName.includes(uName));
       });
     }
 
-    return storechecks;
+    const term = this.filter().toLowerCase().trim();
+    if (term) {
+      filtered = filtered.filter(s => 
+        (s.pdv || '').toLowerCase().includes(term) ||
+        (s.puesto || '').toLowerCase().includes(term) ||
+        (s.mercaderista || '').toLowerCase().includes(term) ||
+        (s.estado || '').toLowerCase().includes(term) ||
+        String(s.id).includes(term)
+      );
+    }
+
+    return filtered.sort((a, b) => (Number(b.id) || 0) - (Number(a.id) || 0));
   });
+
+  paginatedStorechecks = computed(() => {
+    const start = (this.currentPage() - 1) * this.pageSize();
+    return this.filteredStorechecks().slice(start, start + this.pageSize());
+  });
+
+  totalPages = computed(() => {
+    return Math.ceil(this.filteredStorechecks().length / this.pageSize()) || 1;
+  });
+
+  prevPage() {
+    if (this.currentPage() > 1) {
+      this.currentPage.update(p => p - 1);
+    }
+  }
+
+  nextPage() {
+    if (this.currentPage() < this.totalPages()) {
+      this.currentPage.update(p => p + 1);
+    }
+  }
+
+  onPageSizeChange(event: Event) {
+    const val = +(event.target as HTMLSelectElement).value;
+    this.pageSize.set(val);
+    this.currentPage.set(1);
+    this.triggerSearchProgress();
+  }
+
+  updateFilter(event: Event) {
+    this.filter.set((event.target as HTMLInputElement).value);
+    this.currentPage.set(1);
+    this.triggerSearchProgress();
+  }
 
   // KPIs should be calculated using the filtered storechecks list for the user
   comp = computed(() => this.filteredStorechecks().filter((s: Storecheck) => s.estado === 'Completado').length);
@@ -47,6 +107,11 @@ export class ValidacionesComponent {
     public dataService: DataService,
     public auth: AuthService
   ) {}
+
+  ngOnInit() {
+    this.dataService.loadModuleData('validaciones');
+    this.triggerSearchProgress();
+  }
 
   validateSC(sc: Storecheck) {
     this.dataService.updateStorecheck({...sc, estado: 'Completado'});

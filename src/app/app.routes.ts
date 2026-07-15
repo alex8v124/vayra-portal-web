@@ -4,7 +4,19 @@ import { LayoutComponent } from './core/layout/layout';
 import { authGuard } from './core/services/auth.guard';
 
 export const routes: Routes = [
-  { path: '', loadComponent: () => import('./features/landing/landing').then(m => m.LandingComponent), pathMatch: 'full' },
+  { 
+    path: '', 
+    loadComponent: () => import('./features/landing/landing').then(m => m.LandingComponent),
+    children: [
+      { path: '', loadComponent: () => import('./features/landing/pages/landing-home/landing-home').then(m => m.LandingHomeComponent), pathMatch: 'full' },
+      { path: 'sobre-nosotros', loadComponent: () => import('./features/landing/pages/landing-about/landing-about').then(m => m.LandingAboutComponent) },
+      { path: 'caracteristicas', loadComponent: () => import('./features/landing/pages/landing-features/landing-features').then(m => m.LandingFeaturesComponent) },
+      { path: 'preguntas-frecuentes', loadComponent: () => import('./features/landing/pages/landing-faq/landing-faq').then(m => m.LandingFaqComponent) },
+      { path: 'about', redirectTo: 'sobre-nosotros', pathMatch: 'full' },
+      { path: 'features', redirectTo: 'caracteristicas', pathMatch: 'full' },
+      { path: 'faq', redirectTo: 'preguntas-frecuentes', pathMatch: 'full' }
+    ]
+  },
   { path: 'login', component: LoginComponent },
   { 
     path: '', 

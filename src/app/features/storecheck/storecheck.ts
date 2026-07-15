@@ -13,6 +13,26 @@ import { ActivatedRoute } from '@angular/router';
 })
 export class StorecheckComponent implements OnInit {
   filter = signal('');
+  isSearching = signal(false);
+  private searchTimeout: any;
+
+  triggerSearchProgress() {
+    this.isSearching.set(true);
+    if (this.searchTimeout) clearTimeout(this.searchTimeout);
+    this.searchTimeout = setTimeout(() => {
+      this.isSearching.set(false);
+    }, 450);
+  }
+
+  filterPanelOpen = signal(false);
+  selectedMercaderista = signal('');
+  selectedActividad = signal('');
+  selectedFecha = signal('');
+
+  currentPage = signal(1);
+  pageSize = signal(20);
+  selectedPreviewSC = signal<any | null>(null);
+
   scStep = signal(0);
   SC_STEPS = ["PDV", "Puesto", "Actividad", "Foto", "Stock", "Confirmar"];
 
@@ -37,10 +57,83 @@ export class StorecheckComponent implements OnInit {
   @ViewChild('videoElement', { static: false }) videoElement!: ElementRef<HTMLVideoElement>;
   @ViewChild('canvasElement', { static: false }) canvasElement!: ElementRef<HTMLCanvasElement>;
 
-  filteredSCs = computed(() => {
-    const term = this.filter().toLowerCase();
-    return this.dataService.storechecks().filter(s => s.pdv.toLowerCase().includes(term));
+  mercaderistasUnicos = computed(() => {
+    const mercs = this.dataService.storechecks().map(s => s.mercaderista).filter(Boolean);
+    return [...new Set(mercs)].sort();
   });
+
+  actividadesUnicas = computed(() => {
+    const acts = this.dataService.storechecks().map(s => s.actividad).filter(Boolean);
+    return [...new Set(acts)].sort();
+  });
+
+  hayFiltros = computed(() => {
+    return this.selectedMercaderista() !== '' ||
+           this.selectedActividad() !== '' ||
+           this.selectedFecha() !== '';
+  });
+
+  filteredSCs = computed(() => {
+    const term = this.filter().toLowerCase().trim();
+    const merc = this.selectedMercaderista();
+    const act = this.selectedActividad();
+    const fecha = this.selectedFecha();
+
+    return this.dataService.storechecks().filter(s => {
+      if (term && !s.pdv.toLowerCase().includes(term) && !(s.puesto || '').toLowerCase().includes(term) && !s.mercaderista.toLowerCase().includes(term) && !s.actividad.toLowerCase().includes(term)) {
+        return false;
+      }
+      if (merc && s.mercaderista !== merc) return false;
+      if (act && s.actividad !== act) return false;
+      if (fecha && !s.fecha.includes(fecha)) return false;
+      return true;
+    });
+  });
+
+  paginatedSCs = computed(() => {
+    const start = (this.currentPage() - 1) * this.pageSize();
+    return this.filteredSCs().slice(start, start + this.pageSize());
+  });
+
+  totalPages = computed(() => {
+    return Math.ceil(this.filteredSCs().length / this.pageSize()) || 1;
+  });
+
+  toggleFilterPanel() {
+    this.filterPanelOpen.update(v => !v);
+  }
+
+  limpiarFiltros() {
+    this.selectedMercaderista.set('');
+    this.selectedActividad.set('');
+    this.selectedFecha.set('');
+    this.currentPage.set(1);
+    this.triggerSearchProgress();
+    this.dataService.showNotification('Filtros de Storecheck limpiados');
+  }
+
+  limpiarTodosFiltros() {
+    this.filter.set('');
+    this.limpiarFiltros();
+  }
+
+  onMercaderistaChange(event: Event) {
+    this.selectedMercaderista.set((event.target as HTMLSelectElement).value);
+    this.currentPage.set(1);
+    this.triggerSearchProgress();
+  }
+
+  onActividadChange(event: Event) {
+    this.selectedActividad.set((event.target as HTMLSelectElement).value);
+    this.currentPage.set(1);
+    this.triggerSearchProgress();
+  }
+
+  onFechaChange(event: Event) {
+    this.selectedFecha.set((event.target as HTMLInputElement).value);
+    this.currentPage.set(1);
+    this.triggerSearchProgress();
+  }
 
   actVigentes = computed(() => this.dataService.actividades().filter(a => a.estado === "Vigente"));
   pdvActivos = computed(() => this.dataService.pdvs().filter(p => p.estado === "Activo"));
@@ -56,33 +149,47 @@ export class StorecheckComponent implements OnInit {
     );
   });
 
+  activePlanningsSets = computed(() => {
+    const pdvNames = new Set<string>();
+    const pmIdsByPdv = new Map<number, Set<number>>();
+    const actIds = new Set<number>();
+    for (const p of this.activePlanningsToday()) {
+      if (p.pdvNombre) pdvNames.add(p.pdvNombre);
+      if (p.pmIds) {
+        let pmSet = pmIdsByPdv.get(p.pdvId);
+        if (!pmSet) {
+          pmSet = new Set<number>();
+          pmIdsByPdv.set(p.pdvId, pmSet);
+        }
+        p.pmIds.split(',').forEach(id => pmSet!.add(Number(id)));
+      }
+      if (p.actIds) {
+        p.actIds.split(',').forEach(id => actIds.add(Number(id)));
+      }
+    }
+    return { pdvNames, pmIdsByPdv, actIds };
+  });
+
   isPdvActiveToday(pdvName: string): boolean {
-    return this.activePlanningsToday().some(p => p.pdvNombre === pdvName);
+    return this.activePlanningsSets().pdvNames.has(pdvName);
   }
 
   isPmActiveToday(pmId: number | undefined): boolean {
     if (pmId === undefined || pmId === null) return false;
     const currentPdv = this.pdvSeleccionado();
     if (!currentPdv) return false;
-    return this.activePlanningsToday().some(p => {
-      if (p.pdvId !== currentPdv.id) return false;
-      if (!p.pmIds) return false;
-      const ids = p.pmIds.split(',').map(Number);
-      return ids.includes(pmId);
-    });
+    return this.activePlanningsSets().pmIdsByPdv.get(currentPdv.id)?.has(pmId) ?? false;
   }
 
   isActividadActiveToday(actId: number): boolean {
-    return this.activePlanningsToday().some(p => {
-      if (!p.actIds) return false;
-      const ids = p.actIds.split(',').map(Number);
-      return ids.includes(actId);
-    });
+    return this.activePlanningsSets().actIds.has(actId);
   }
 
   constructor(public dataService: DataService, public auth: AuthService, private route: ActivatedRoute) {}
 
   ngOnInit() {
+    this.dataService.loadModuleData('storecheck');
+    this.triggerSearchProgress();
     this.route.queryParams.subscribe(params => {
       if (params['pdvName']) {
         this.scForm.set({
@@ -102,6 +209,48 @@ export class StorecheckComponent implements OnInit {
 
   updateFilter(event: Event) {
     this.filter.set((event.target as HTMLInputElement).value);
+    this.currentPage.set(1);
+    this.triggerSearchProgress();
+  }
+
+  nextPage() {
+    if (this.currentPage() < this.totalPages()) {
+      this.currentPage.update(p => p + 1);
+    }
+  }
+
+  prevPage() {
+    if (this.currentPage() > 1) {
+      this.currentPage.update(p => p - 1);
+    }
+  }
+
+  onPageSizeChange(event: Event) {
+    const val = +(event.target as HTMLSelectElement).value;
+    this.pageSize.set(val);
+    this.currentPage.set(1);
+    this.triggerSearchProgress();
+  }
+
+  previewStorecheck(sc: any) {
+    this.selectedPreviewSC.set(sc);
+  }
+
+  closePreview() {
+    this.selectedPreviewSC.set(null);
+  }
+
+  parseReporte(reporte: any): any[] {
+    if (!reporte) return [];
+    if (typeof reporte === 'string') {
+      try {
+        return JSON.parse(reporte);
+      } catch (e) {
+        return [];
+      }
+    }
+    if (Array.isArray(reporte)) return reporte;
+    return [];
   }
 
   startNewSC() {

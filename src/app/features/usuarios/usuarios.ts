@@ -1,4 +1,4 @@
-import { Component, signal } from '@angular/core';
+import { Component, signal, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { DataService } from '../../core/services/data.service';
 import { User } from '../../core/models/user.model';
@@ -9,7 +9,7 @@ import { User } from '../../core/models/user.model';
   templateUrl: './usuarios.html',
   styleUrl: './usuarios.css'
 })
-export class UsuariosComponent {
+export class UsuariosComponent implements OnInit {
   
   ROLE_LABELS: Record<string, string> = {admin:"Administrador",analista:"Analista",supervisor:"Supervisor",mercaderista:"Mercaderista"};
   ROLE_COLORS: Record<string, string> = {admin:"#8B5CF6",analista:"#0EA5E9",supervisor:"#F59E0B",mercaderista:"#10B981"};
@@ -18,6 +18,10 @@ export class UsuariosComponent {
   newUser: any = { name: '', email: '', role: 'mercaderista', equipoComercial: '' };
 
   constructor(public dataService: DataService) {}
+
+  ngOnInit() {
+    this.dataService.loadModuleData('usuarios');
+  }
 
   avatarInitials(n: string) {
     if (!n) return "U";

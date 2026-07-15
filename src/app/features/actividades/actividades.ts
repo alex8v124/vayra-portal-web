@@ -1,4 +1,4 @@
-import { Component, computed, signal } from '@angular/core';
+import { Component, computed, signal, OnInit } from '@angular/core';
 import { DataService } from '../../core/services/data.service';
 import { AuthService } from '../../core/services/auth.service';
 
@@ -8,7 +8,7 @@ import { AuthService } from '../../core/services/auth.service';
   templateUrl: './actividades.html',
   styleUrl: './actividades.css'
 })
-export class ActividadesComponent {
+export class ActividadesComponent implements OnInit {
   
   vigentes = computed(() => this.dataService.actividades().filter(a => a.estado === 'Vigente'));
   caducadas = computed(() => this.dataService.actividades().filter(a => a.estado === 'Caducada'));
@@ -44,18 +44,32 @@ export class ActividadesComponent {
     );
   });
 
+  activePlanningsSet = computed(() => {
+    const actIds = new Set<number>();
+    for (const p of this.activePlanningsToday()) {
+      if (p.actIds) {
+        p.actIds.split(',').forEach(id => actIds.add(Number(id)));
+      }
+    }
+    return actIds;
+  });
+
   isActividadActiveToday(actId: number): boolean {
-    return this.activePlanningsToday().some(p => {
-      if (!p.actIds) return false;
-      const ids = p.actIds.split(',').map(Number);
-      return ids.includes(actId);
-    });
+    return this.activePlanningsSet().has(actId);
   }
+
+  skuMap = computed(() => new Map(this.dataService.skus().map(s => [s.id, s.nombre])));
 
   constructor(public dataService: DataService, public auth: AuthService) {}
 
+  ngOnInit() {
+    this.dataService.loadModuleData('actividades');
+  }
+
   getSkuNames(skuIds: number[]) {
-    return skuIds.map(id => this.dataService.skus().find(s => s.id === id)?.nombre).filter(Boolean);
+    if (!skuIds) return [];
+    const map = this.skuMap();
+    return skuIds.map(id => map.get(id)).filter(Boolean);
   }
 
   toggleActividad(id: number, event: Event) {

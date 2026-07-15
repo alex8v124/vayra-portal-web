@@ -319,3 +319,51 @@ input:checked+.slider:before{transform:translateX(22px)}
   letter-spacing: 0.5px;
   z-index: 10;
 }
+
+/* Progress & Search Loading Bar */
+.search-progress-bar {
+  width: 100%;
+  background: var(--surface);
+  border-radius: 12px;
+  overflow: hidden;
+  position: relative;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 20px;
+  border: 1px solid rgba(14, 165, 233, 0.35);
+  box-shadow: 0 4px 16px rgba(14, 165, 233, 0.12);
+  animation: fadeIn .2s ease;
+}
+.search-progress-bar-fill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 40%;
+  background: linear-gradient(90deg, transparent, rgba(14, 165, 233, 0.25), rgba(99, 102, 241, 0.4), transparent);
+  animation: searchProgressScan 1.1s infinite ease-in-out;
+}
+.search-progress-text {
+  position: relative;
+  z-index: 2;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--info);
+  letter-spacing: 0.3px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.search-progress-spinner {
+  animation: spinnerRotate 0.8s linear infinite;
+}
+@keyframes searchProgressScan {
+  0% { left: -45%; }
+  100% { left: 105%; }
+}
+@keyframes spinnerRotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}

@@ -1,4 +1,4 @@
-import { Component, computed, signal } from '@angular/core';
+import { Component, computed, signal, OnInit } from '@angular/core';
 import { DataService } from '../../core/services/data.service';
 import { AuthService } from '../../core/services/auth.service';
 import { Router } from '@angular/router';
@@ -9,17 +9,73 @@ import { Router } from '@angular/router';
   templateUrl: './pdv.html',
   styleUrl: './pdv.css'
 })
-export class PdvComponent {
+export class PdvComponent implements OnInit {
   filter = signal('');
+  filterPanelOpen = signal(false);
+  selectedDistrito = signal('');
+  selectedTipo = signal('');
+  selectedEstado = signal('');
+  selectedPendiente = signal('');
+
   activeModal = signal<'none' | 'puestos' | 'new_pdv' | 'edit_pdv' | 'add_puesto' | 'edit_puesto' | 'visit'>('none');
   selectedPdv = signal<any>(null);
   editingPuesto = signal<any>(null);
   selectedActIds = signal<number[]>([]);
 
-  filteredPDVs = computed(() => {
-    const term = this.filter().toLowerCase();
-    return this.dataService.pdvs().filter(p => p.nombre.toLowerCase().includes(term));
+  distritosUnicos = computed(() => {
+    const dists = this.dataService.pdvs().map(p => p.distrito).filter(Boolean);
+    return [...new Set(dists)].sort();
   });
+
+  tiposUnicos = computed(() => {
+    const tips = this.dataService.pdvs().map(p => p.tipo).filter(Boolean);
+    return [...new Set(tips)].sort();
+  });
+
+  hayFiltros = computed(() => {
+    return this.selectedDistrito() !== '' ||
+           this.selectedTipo() !== '' ||
+           this.selectedEstado() !== '' ||
+           this.selectedPendiente() !== '';
+  });
+
+  filteredPDVs = computed(() => {
+    const term = this.filter().toLowerCase().trim();
+    const dist = this.selectedDistrito();
+    const tipo = this.selectedTipo();
+    const estado = this.selectedEstado();
+    const pend = this.selectedPendiente();
+
+    return this.dataService.pdvs().filter(p => {
+      if (term && !p.nombre.toLowerCase().includes(term) && !p.codigo.toLowerCase().includes(term) && !p.distrito.toLowerCase().includes(term)) {
+        return false;
+      }
+      if (dist && p.distrito !== dist) return false;
+      if (tipo && p.tipo !== tipo) return false;
+      if (estado && p.estado !== estado) return false;
+      if (pend === 'pendiente' && !p.pendiente) return false;
+      if (pend === 'al_dia' && p.pendiente) return false;
+      if (pend === 'hoy' && !this.isPdvActiveToday(p.id)) return false;
+      return true;
+    });
+  });
+
+  toggleFilterPanel() {
+    this.filterPanelOpen.update(v => !v);
+  }
+
+  limpiarFiltros() {
+    this.selectedDistrito.set('');
+    this.selectedTipo.set('');
+    this.selectedEstado.set('');
+    this.selectedPendiente.set('');
+    this.dataService.showNotification('Filtros de PDV limpiados');
+  }
+
+  limpiarTodosFiltros() {
+    this.filter.set('');
+    this.limpiarFiltros();
+  }
 
   activePlanningsToday = computed(() => {
     const currentUser = this.auth.currentUser();
@@ -30,21 +86,37 @@ export class PdvComponent {
     );
   });
 
+  activePlanningsSets = computed(() => {
+    const pdvIds = new Set<number>();
+    const pmIdsByPdv = new Map<number, Set<number>>();
+    for (const p of this.activePlanningsToday()) {
+      pdvIds.add(p.pdvId);
+      if (p.pmIds) {
+        let pmSet = pmIdsByPdv.get(p.pdvId);
+        if (!pmSet) {
+          pmSet = new Set<number>();
+          pmIdsByPdv.set(p.pdvId, pmSet);
+        }
+        p.pmIds.split(',').forEach(id => pmSet!.add(Number(id)));
+      }
+    }
+    return { pdvIds, pmIdsByPdv };
+  });
+
   isPdvActiveToday(pdvId: number): boolean {
-    return this.activePlanningsToday().some(p => p.pdvId === pdvId);
+    return this.activePlanningsSets().pdvIds.has(pdvId);
   }
 
   isPmActiveToday(pmId: number | undefined, pdvId: number): boolean {
     if (pmId === undefined || pmId === null) return false;
-    return this.activePlanningsToday().some(p => {
-      if (p.pdvId !== pdvId) return false;
-      if (!p.pmIds) return false;
-      const ids = p.pmIds.split(',').map(Number);
-      return ids.includes(pmId);
-    });
+    return this.activePlanningsSets().pmIdsByPdv.get(pdvId)?.has(pmId) ?? false;
   }
 
   constructor(public dataService: DataService, public auth: AuthService, private router: Router) {}
+
+  ngOnInit() {
+    this.dataService.loadModuleData('pdv');
+  }
 
   updateFilter(event: Event) {
     this.filter.set((event.target as HTMLInputElement).value);
