@@ -16,7 +16,7 @@
               </div>
             </td>
             <td class="td-muted">{{u.email}}</td>
-            <td><span class="badge" [class]="u.role==='admin'?'badge-purple':u.role==='analista'?'badge-info':u.role==='supervisor'?'badge-warning':'badge-success'">{{ROLE_LABELS[u.role] || u.role}}</span></td>
+            <td><span class="badge" [class]="(u.role==='admin'||u.role==='gerente')?'badge-purple':(u.role==='analista'||u.role==='controller')?'badge-info':u.role==='supervisor'?'badge-warning':'badge-success'">{{ROLE_LABELS[u.role] || u.role}}</span></td>
             <td><span class="badge badge-default">{{u.equipoComercial || '-'}}</span></td>
             <td><span class="badge" [class]="u.status==='Activo'?'badge-success':'badge-default'">{{u.status}}</span></td>
             <td><label class="switch"><input type="checkbox" [checked]="u.status==='Activo'" (change)="toggleUser(u.id, $event)"><span class="slider"></span></label></td>
@@ -54,7 +54,9 @@
         <label>Rol de Usuario *</label>
         <select [(ngModel)]="newUser.role">
           <option value="admin">Administrador</option>
+          <option value="gerente">Gerente</option>
           <option value="analista">Analista</option>
+          <option value="controller">Controller</option>
           <option value="supervisor">Supervisor</option>
           <option value="mercaderista">Mercaderista</option>
         </select>

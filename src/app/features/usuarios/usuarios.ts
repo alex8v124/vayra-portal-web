@@ -11,8 +11,8 @@ import { User } from '../../core/models/user.model';
 })
 export class UsuariosComponent implements OnInit {
   
-  ROLE_LABELS: Record<string, string> = {admin:"Administrador",analista:"Analista",supervisor:"Supervisor",mercaderista:"Mercaderista"};
-  ROLE_COLORS: Record<string, string> = {admin:"#8B5CF6",analista:"#0EA5E9",supervisor:"#F59E0B",mercaderista:"#10B981"};
+  ROLE_LABELS: Record<string, string> = {admin:"Administrador",analista:"Analista",controller:"Controller",supervisor:"Supervisor",mercaderista:"Mercaderista",gerente:"Gerente"};
+  ROLE_COLORS: Record<string, string> = {admin:"#8B5CF6",analista:"#0EA5E9",controller:"#3B82F6",supervisor:"#F59E0B",mercaderista:"#10B981",gerente:"#6366F1"};
 
   showModal = signal(false);
   newUser: any = { name: '', email: '', role: 'mercaderista', equipoComercial: '' };

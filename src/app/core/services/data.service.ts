@@ -89,7 +89,10 @@ export class DataService {
   // ==== USUARIOS ====
   loadUsers() {
     this.http.get<User[]>(this.apiUsuarios).subscribe({
-      next: (data) => this.users.set(data),
+      next: (data) => {
+        const normalized = (data || []).map(u => ({ ...u, role: (u.role || 'mercaderista').toLowerCase() as any }));
+        this.users.set(normalized);
+      },
       error: (err) => console.error('Error fetching users', err)
     });
   }

@@ -50,12 +50,15 @@ export class ReportesComponent implements OnInit {
       let m2 = true;
       if (f.controller) {
         const ctrlUser = this.dataService.users().find(u => u.name.trim().toLowerCase() === f.controller.trim().toLowerCase());
-        if (ctrlUser && ctrlUser.equipoComercial) {
+        if (ctrlUser && ctrlUser.equipoComercial && ctrlUser.equipoComercial.trim() !== '') {
+          const targetTeam = ctrlUser.equipoComercial.trim().toLowerCase();
           const teamMembers = this.dataService.users()
-            .filter(u => u.equipoComercial === ctrlUser.equipoComercial)
+            .filter(u => (u.equipoComercial || '').trim().toLowerCase() === targetTeam)
             .map(u => u.name.trim().toLowerCase());
           const merc = (item.mercaderista || "").trim().toLowerCase();
           m2 = teamMembers.some(uName => uName === merc || uName.includes(merc) || merc.includes(uName)) || merc.includes(f.controller.toLowerCase());
+        } else if (ctrlUser && (ctrlUser.role === 'analista' || ctrlUser.role === 'controller' || ctrlUser.role === 'admin')) {
+          m2 = true; // Si el Controller no tiene equipo asignado, puede supervisar todos los storechecks
         } else {
           m2 = (item.mercaderista || "").toLowerCase().includes(f.controller.toLowerCase());
         }
@@ -64,12 +67,15 @@ export class ReportesComponent implements OnInit {
       let m3 = true;
       if (f.supervisor) {
         const supUser = this.dataService.users().find(u => u.name.trim().toLowerCase() === f.supervisor.trim().toLowerCase());
-        if (supUser && supUser.equipoComercial) {
+        if (supUser && supUser.equipoComercial && supUser.equipoComercial.trim() !== '') {
+          const targetTeam = supUser.equipoComercial.trim().toLowerCase();
           const teamMembers = this.dataService.users()
-            .filter(u => u.equipoComercial === supUser.equipoComercial)
+            .filter(u => (u.equipoComercial || '').trim().toLowerCase() === targetTeam)
             .map(u => u.name.trim().toLowerCase());
           const merc = (item.mercaderista || "").trim().toLowerCase();
           m3 = teamMembers.some(uName => uName === merc || uName.includes(merc) || merc.includes(uName)) || merc.includes(f.supervisor.toLowerCase());
+        } else if (supUser && supUser.role === 'admin') {
+          m3 = true;
         } else {
           m3 = (item.mercaderista || "").toLowerCase().includes(f.supervisor.toLowerCase());
         }
@@ -118,17 +124,25 @@ export class ReportesComponent implements OnInit {
   hoy = new Date().toISOString().split("T")[0];
 
   analistas = computed(() => {
-    const list = this.dataService.users().filter(u => u.role === 'analista' || u.role === 'admin' || (u.role as any) === 'controller');
+    const list = this.dataService.users().filter(u => {
+      const r = (u.role || '').toLowerCase();
+      return r === 'analista' || r === 'controller' || r === 'admin';
+    });
     return Array.from(new Set(list.map(u => u.name))).filter(Boolean).sort().map(name => ({ id: name, name }));
   });
   supervisores = computed(() => {
-    const list = this.dataService.users().filter(u => u.role === 'supervisor' || u.role === 'admin');
+    const list = this.dataService.users().filter(u => {
+      const r = (u.role || '').toLowerCase();
+      return r === 'supervisor' || r === 'admin' || r === 'gerente';
+    });
     return Array.from(new Set(list.map(u => u.name))).filter(Boolean).sort().map(name => ({ id: name, name }));
   });
   gestores = computed(() => {
-    const fromUsers = this.dataService.users().filter(u => u.role === 'mercaderista' || (u.role as any) === 'gestor').map(u => u.name);
-    const fromStorechecks = this.dataService.storechecks().map(s => s.mercaderista);
-    return Array.from(new Set([...fromUsers, ...fromStorechecks])).filter(Boolean).sort().map(name => ({ id: name, name }));
+    const list = this.dataService.users().filter(u => {
+      const r = (u.role || '').toLowerCase();
+      return r === 'mercaderista' || r === 'gestor';
+    });
+    return Array.from(new Set(list.map(u => u.name))).filter(Boolean).sort().map(name => ({ id: name, name }));
   });
   actividadesUnicas = computed(() => {
     const fromAct = this.dataService.actividades().map(a => a.nombre);
