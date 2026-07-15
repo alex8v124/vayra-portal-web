@@ -6,6 +6,7 @@ import { User } from '../models/user.model';
 import { DataService } from './data.service';
 import { catchError, map } from 'rxjs/operators';
 import { of } from 'rxjs';
+import { environment } from '../../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
@@ -27,7 +28,7 @@ export class AuthService {
     return u && u.roles && (u.roles.includes('ROLE_SUPERVISOR') || u.roles.includes('ROLE_ADMIN'));
   });
 
-  private apiUrl = 'http://localhost:8080/api/auth/login';
+  private apiUrl = `${environment.apiUrl}/api/auth/login`;
 
   constructor(
     private router: Router, 

@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from '../../../environments/environment';
 
 export interface Cronograma {
   id?: number;
@@ -15,7 +16,7 @@ export interface Cronograma {
   providedIn: 'root'
 })
 export class CronogramaService {
-  private apiUrl = 'http://localhost:8080/api/cronogramas';
+  private apiUrl = `${environment.apiUrl}/api/cronogramas`;
 
   constructor(private http: HttpClient) {}
 

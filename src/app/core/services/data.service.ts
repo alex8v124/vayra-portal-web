@@ -8,6 +8,7 @@ import { Actividad } from '../models/actividad.model';
 import { Storecheck } from '../models/storecheck.model';
 import { Planning } from '../models/planning.model';
 import { EquipoComercial } from '../models/equipo-comercial.model';
+import { environment } from '../../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
@@ -23,9 +24,9 @@ export class DataService {
   isLoadingPlannings = signal<boolean>(true);
   equipos = signal<EquipoComercial[]>([]);
 
-  private apiUrl = 'http://localhost:8080/api/data';
-  private apiUsuarios = 'http://localhost:8080/api/usuarios';
-  private apiEquipos = 'http://localhost:8080/api/data/equipos';
+  private apiUrl = `${environment.apiUrl}/api/data`;
+  private apiUsuarios = `${environment.apiUrl}/api/usuarios`;
+  private apiEquipos = `${environment.apiUrl}/api/data/equipos`;
 
   private loadedModules = new Set<string>();
 
