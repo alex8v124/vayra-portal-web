@@ -55,6 +55,7 @@ export class StorecheckProcessorComponent implements OnInit {
     if (isPlatformBrowser(this.platformId)) {
       this.cronogramaService.listar().subscribe((data: Cronograma[]) => {
         this.cronogramas = data;
+        this.consolidarTodosLosCronogramas();
         this.cdr.detectChanges();
       });
     }
@@ -172,12 +173,42 @@ export class StorecheckProcessorComponent implements OnInit {
     
     // Auto-mapeo simple
     this.pdvsUnicos.forEach(pdv => this.mapeoMercados[pdv] = pdv);
+
+    // Auto-completar cruce con el catálogo de mercados unificado
+    if (this.cronogramaMercados && this.cronogramaMercados.length > 0) {
+      this.autocompletarMapeo();
+    }
+  }
+
+  consolidarTodosLosCronogramas() {
+    const todosLosDatos: any[] = [];
+    const uniqueMarkets = new Set<string>();
+
+    this.cronogramas.forEach(c => {
+      try {
+        const arr = JSON.parse(c.datosJson);
+        if (Array.isArray(arr)) {
+          arr.forEach((x: any) => {
+            todosLosDatos.push(x);
+            if (x.MERCADO) uniqueMarkets.add(x.MERCADO);
+          });
+        }
+      } catch (e) {
+        // Ignorar error individual
+      }
+    });
+
+    this.cronogramaData = todosLosDatos;
+    this.cronogramaMercados = Array.from(uniqueMarkets).sort();
+
+    if (this.pdvsUnicos && this.pdvsUnicos.length > 0) {
+      this.autocompletarMapeo();
+    }
   }
 
   onCronogramaChange() {
-    if (!this.selectedCronogramaId) {
-      this.cronogramaMercados = [];
-      this.cronogramaData = [];
+    if (!this.selectedCronogramaId || this.selectedCronogramaId === 'ALL' as any) {
+      this.consolidarTodosLosCronogramas();
       return;
     }
 
@@ -186,13 +217,15 @@ export class StorecheckProcessorComponent implements OnInit {
       try {
         const arr = JSON.parse(crono.datosJson);
         this.cronogramaData = arr;
-        // Extraer mercados únicos, ya que ahora hay múltiples visitas por mercado
         const uniqueMarkets = new Set<string>();
         arr.forEach((x: any) => { if(x.MERCADO) uniqueMarkets.add(x.MERCADO); });
-        this.cronogramaMercados = Array.from(uniqueMarkets);
+        this.cronogramaMercados = Array.from(uniqueMarkets).sort();
       } catch (e) {
         this.cronogramaMercados = [];
       }
+    }
+    if (this.pdvsUnicos && this.pdvsUnicos.length > 0) {
+      this.autocompletarMapeo();
     }
   }
 
@@ -201,9 +234,9 @@ export class StorecheckProcessorComponent implements OnInit {
   }
 
   autocompletarMapeo() {
-    // Si el pdv coincide parcialmente con algun mercado del cronograma
     this.pdvsUnicos.forEach(pdv => {
-      const match = this.cronogramaMercados.find(m => m.toLowerCase() === pdv.toLowerCase());
+      const pdvClean = pdv.trim().toLowerCase();
+      const match = this.cronogramaMercados.find(m => m.trim().toLowerCase() === pdvClean);
       if (match) {
         this.mapeoMercados[pdv] = match;
       }

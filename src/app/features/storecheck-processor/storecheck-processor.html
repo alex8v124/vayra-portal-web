@@ -92,15 +92,26 @@
     </div>
 
     <div class="field">
-      <label>Cronograma</label>
+      <label>Cronograma de Referencia</label>
       <select [(ngModel)]="selectedCronogramaId" (change)="onCronogramaChange()">
-        <option [value]="null">-- Seleccionar Cronograma --</option>
+        <option [ngValue]="null">✨ Todos los Cronogramas (Consolidado Global)</option>
         @for(c of cronogramas; track c.id) {
           <option [value]="c.id">{{c.nombre}}</option>
         }
       </select>
     </div>
   </div>
+
+  @if (!selectedCronogramaId) {
+    <div style="margin-top: 18px; padding: 14px 18px; border-radius: 12px; background: rgba(99, 102, 241, 0.08); border: 1px solid rgba(99, 102, 241, 0.25); display: flex; align-items: center; gap: 14px; color: var(--purple, #6366f1);">
+      <div style="width: 36px; height: 36px; border-radius: 10px; background: rgba(99, 102, 241, 0.15); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+      </div>
+      <div style="font-size: 13.5px; color: var(--text-main); line-height: 1.4;">
+        <strong style="color: var(--purple, #6366f1); font-weight: 700;">Modo Consolidado Maestro Activo:</strong> El sistema unificará automáticamente los datos de los <strong>{{cronogramas.length}} cronogramas disponibles</strong> ({{cronogramaMercados.length}} mercados en total) para homologar el reporte delimitado exportado de la sección Reportes, sin tener que procesar por mercaderista individual.
+      </div>
+    </div>
+  }
   
   <div style="margin-top:24px; display:flex; justify-content:flex-end; gap:12px;">
     <button class="btn btn-ghost" (click)="step = 1">Volver</button>
