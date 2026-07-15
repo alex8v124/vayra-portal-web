@@ -1,8 +1,9 @@
-import { Component, OnInit, Inject, PLATFORM_ID } from '@angular/core';
+import { Component, OnInit, Inject, PLATFORM_ID, computed } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { ReactiveFormsModule, FormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { CronogramaService, Cronograma } from '../../core/services/cronograma.service';
 import { DataService } from '../../core/services/data.service';
+import { AuthService } from '../../core/services/auth.service';
 import { Planning } from '../../core/models/planning.model';
 
 @Component({
@@ -18,6 +19,23 @@ export class CronogramasComponent implements OnInit {
   form: FormGroup;
   showModal = false;
   
+  availablePlannings = computed(() => {
+    const all = this.dataService.plannings();
+    if (this.auth.isAdmin()) {
+      return all;
+    }
+    const currentUser = this.auth.currentUser();
+    if (currentUser?.role === 'supervisor') {
+      const freshUser = this.dataService.users().find(u => Number(u.id) === Number(currentUser.id)) || currentUser;
+      const assignedStr = freshUser.pdvsAsignados || currentUser.pdvsAsignados || '';
+      if (assignedStr.trim()) {
+        const allowedIds = new Set(assignedStr.split(',').map((id: string) => Number(id.trim())).filter(Boolean));
+        return all.filter(p => p.pdvId && allowedIds.has(Number(p.pdvId)));
+      }
+    }
+    return all;
+  });
+
   // Vistas y Calendario
   viewMode: 'lista' | 'mes' | 'semana' | 'anio' = 'lista';
   currentDate: Date = new Date();
@@ -36,6 +54,7 @@ export class CronogramasComponent implements OnInit {
   constructor(
     private cronogramaService: CronogramaService, 
     public dataService: DataService,
+    public auth: AuthService,
     private fb: FormBuilder,
     @Inject(PLATFORM_ID) private platformId: Object
   ) {

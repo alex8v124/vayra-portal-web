@@ -1,6 +1,6 @@
-﻿<div class="kpi-grid">
+<div class="kpi-grid">
   <div class="kpi-card">
-    <div><div class="kpi-label">PDVs Activos</div><div class="kpi-value">5</div><div class="kpi-sub up" style="display:flex;align-items:center;gap:4px"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="18 15 12 9 6 15"/></svg>+1 este mes</div></div>
+    <div><div class="kpi-label">PDVs Activos</div><div class="kpi-value">{{activosPDV()}}</div><div class="kpi-sub up" style="display:flex;align-items:center;gap:4px"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="18 15 12 9 6 15"/></svg>+1 este mes</div></div>
     <div class="kpi-icon" style="background:rgba(14,165,233,.1)"><svg width="20" height="20" fill="none" stroke="var(--primary)" stroke-width="2" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></div>
   </div>
   <div class="kpi-card">
@@ -12,7 +12,7 @@
     <div class="kpi-icon" style="background:rgba(139,92,246,.1)"><svg width="20" height="20" fill="none" stroke="var(--purple)" stroke-width="2" viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg></div>
   </div>
   <div class="kpi-card">
-    <div><div class="kpi-label">Cobertura semanal</div><div class="kpi-value">72%</div><div class="kpi-sub up" style="display:flex;align-items:center;gap:4px"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="18 15 12 9 6 15"/></svg>+5 pp vs semana anterior</div></div>
+    <div><div class="kpi-label">Cobertura semanal</div><div class="kpi-value">{{coberturaSemanalPct()}}%</div><div class="kpi-sub up" style="display:flex;align-items:center;gap:4px"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="18 15 12 9 6 15"/></svg>+5 pp vs semana anterior</div></div>
     <div class="kpi-icon" style="background:rgba(245,158,11,.1)"><svg width="20" height="20" fill="none" stroke="var(--warning)" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></div>
   </div>
 </div>

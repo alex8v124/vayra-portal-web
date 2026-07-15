@@ -159,7 +159,7 @@
               <svg class="select-icon" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
               <select [value]="formPdvId().toString()" (change)="onPdvChange($event)">
                 <option value="0" [selected]="!formPdvId() || formPdvId() === 0">Seleccionar PDV...</option>
-                @for(pdv of dataService.pdvs(); track pdv.id) {
+                @for(pdv of availablePdvs(); track pdv.id) {
                   <option [value]="pdv.id.toString()" [selected]="+$any(pdv.id) === +formPdvId()">{{pdv.nombre}}</option>
                 }
               </select>

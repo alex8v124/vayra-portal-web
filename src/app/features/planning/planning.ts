@@ -51,6 +51,24 @@ export class PlanningComponent implements OnInit {
     return pdv ? pdv.puestos : [];
   });
 
+  // Available PDVs filtered by supervisor assignments if not admin
+  availablePdvs = computed(() => {
+    const allPdvs = this.dataService.pdvs();
+    if (this.auth.isAdmin()) {
+      return allPdvs;
+    }
+    const currentUser = this.auth.currentUser();
+    if (currentUser?.role === 'supervisor') {
+      const freshUser = this.dataService.users().find(u => Number(u.id) === Number(currentUser.id)) || currentUser;
+      const assignedStr = freshUser.pdvsAsignados || currentUser.pdvsAsignados || '';
+      if (assignedStr.trim()) {
+        const allowedIds = new Set(assignedStr.split(',').map((id: string) => Number(id.trim())).filter(Boolean));
+        return allPdvs.filter(p => allowedIds.has(Number(p.id)));
+      }
+    }
+    return allPdvs;
+  });
+
   // Available Activities
   availableActividades = computed(() => {
     return this.dataService.actividades();

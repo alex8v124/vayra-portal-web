@@ -224,7 +224,7 @@
         <div class="form-group" style="margin-bottom: 20px;">
           <label style="font-weight: 600; color: var(--text-muted); font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px;">Plannings Base (Selección Múltiple)</label>
           <select multiple class="form-control" formControlName="planningIds" style="height: 140px; border-radius: 12px; padding: 12px; color: var(--text-main); background: var(--surface-hover); border: 2px solid transparent; outline: none;">
-            @for(p of dataService.plannings(); track p.planningId) {
+            @for(p of availablePlannings(); track p.planningId) {
               <option [value]="p.planningId?.toString()" style="padding: 8px; border-radius: 6px; margin-bottom: 2px;">{{ p.pdvNombre }} - {{ p.mercaderistaName }}</option>
             }
           </select>

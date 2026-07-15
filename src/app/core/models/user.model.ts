@@ -6,4 +6,5 @@ export interface User {
   password?: string;
   status: 'Activo' | 'Inactivo';
   equipoComercial?: string;
+  pdvsAsignados?: string;
 }
